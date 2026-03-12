@@ -138,7 +138,19 @@ Use these packages:
 - `https://ai-sdk.dev/providers/ai-sdk-providers/openai` for OpenAI models.
 - `https://ai-sdk.dev/providers/ai-sdk-providers/anthropic` for Anthropic models.
 - `https://ai-sdk.dev/providers/ai-sdk-providers/google-generative-ai` for Google models.
-- `@ai-sdk/openai-compatible` for custom base URL models.
+- `https://ai-sdk.dev/providers/openai-compatible-providers` for custom base URL models.
+
+  ```ts
+  import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
+
+  const provider = createOpenAICompatible({
+    name: 'providerName',
+    apiKey: process.env.PROVIDER_API_KEY,
+    baseURL: 'https://api.provider.com/v1',
+    includeUsage: true, // Include usage information in streaming responses
+  })
+  ```
+
 - `noarg` for argument parsing: `https://www.npmjs.com/package/noarg`.
 - `@inquirer/prompts` for interactive prompts.
 - `chalk` for terminal colors.
@@ -153,3 +165,7 @@ Dependency rule:
 - Create a Docker-based test environment for reliability checks.
 - Authentication is not required for test environments.
 - Git behavior may be faked or mocked to verify CLI flow safely.
+
+```
+
+```
