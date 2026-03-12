@@ -145,7 +145,7 @@ Rules:
 
 Use these packages:
 
-- `ai` for LLM integration.
+- `ai` for LLM integration `https://ai-sdk.dev`.
 - `https://ai-sdk.dev/providers/ai-sdk-providers/openai` for OpenAI models.
 - `https://ai-sdk.dev/providers/ai-sdk-providers/anthropic` for Anthropic models.
 - `https://ai-sdk.dev/providers/ai-sdk-providers/google-generative-ai` for Google models.
