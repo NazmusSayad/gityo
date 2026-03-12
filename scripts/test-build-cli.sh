@@ -66,7 +66,7 @@ run_cli_capture() {
 	set +e
 	(
 		cd "$dir_path"
-		HOME="$home_path" node "$APP_DIR/dist/index.mjs" "$@"
+		HOME="$home_path" node "$APP_DIR/dist/index.js" "$@"
 	) >"$prefix.stdout" 2>"$prefix.stderr"
 	status="$?"
 	set -e
@@ -92,7 +92,7 @@ set homePath $env(EXPECT_HOME_PATH)
 set appDir $env(EXPECT_APP_DIR)
 set commitMessage $env(EXPECT_COMMIT_MESSAGE)
 
-spawn sh -lc "cd \"$repoPath\" && HOME=\"$homePath\" node \"$appDir/dist/index.mjs\""
+spawn sh -lc "cd \"$repoPath\" && HOME=\"$homePath\" node \"$appDir/dist/index.js\""
 
 if {$scriptName eq "stage-all-commit"} {
   expect "changes"
