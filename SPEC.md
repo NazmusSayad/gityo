@@ -98,7 +98,7 @@ Use a JSON config file.
 
 - `models`: record of available model groups.
   - Keys: `openai`, `anthropic`, `openrouter`, or a custom base URL.
-  - Values: arrays of model names.
+  - Values: arrays of model names (string) or (object, with `name`, `reasoning` properties).
 - `defaultModel`: model used by default for commit message generation.
 - `autoAcceptCommitMessage`: if `true`, accept generated commit messages automatically; otherwise ask for confirmation.
 - `postCommand`: `push` or `push-and-pull`.
