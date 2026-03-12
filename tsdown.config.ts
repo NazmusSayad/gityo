@@ -17,9 +17,7 @@ export default defineConfig({
   external: [
     /node:/gim,
     /node_modules/gim,
-    ...getExternal((packageJSON as any).dependencies),
     ...getExternal((packageJSON as any).devDependencies),
-    ...getExternal((packageJSON as any).peerDependencies),
   ],
 
   outputOptions(options, format) {

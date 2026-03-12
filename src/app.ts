@@ -1,13 +1,13 @@
 import { NoArg } from 'noarg'
+import { mainController } from './controllers/main'
+import { listModelsController } from './controllers/models-list'
+import { setModelsController } from './controllers/models-set'
 import { handleError } from './lib/handle-error'
-import { listModelsCommand } from './models/commands/list'
-import { setModelKeyCommand } from './models/commands/set'
-import { runCommand } from './run/command'
 
 export const app = NoArg.create('gityo', {
   description:
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.',
-}).on(async () => handleError(runCommand))
+}).on(async () => handleError(mainController))
 
 const modelsProgram = app.create('models', {
   description: 'Manage configured models and stored API keys.',
@@ -18,7 +18,7 @@ modelsProgram
   .create('list', {
     description: 'List configured model groups and any stored API keys.',
   })
-  .on(() => handleError(listModelsCommand))
+  .on(() => handleError(listModelsController))
 
 modelsProgram
   .create('set', {
@@ -28,5 +28,5 @@ modelsProgram
     optionalArguments: [{ name: 'api-key', type: NoArg.string() }],
   })
   .on(async ([provider, apiKey]) => {
-    handleError(() => setModelKeyCommand(provider, apiKey))
+    handleError(() => setModelsController(provider, apiKey))
   })

@@ -1,7 +1,7 @@
-import { loadConfig } from '../../lib/load-load'
-import { listStoredApiKeys } from '../keys'
+import { loadConfig } from '../lib/load-config'
+import { listStoredApiKeys } from '../lib/secrets'
 
-export async function listModelsCommand() {
+export async function listModelsController() {
   const [config, storedKeys] = await Promise.all([
     loadConfig(),
     listStoredApiKeys(),
@@ -15,9 +15,7 @@ export async function listModelsCommand() {
   ).sort((left, right) => left.localeCompare(right))
 
   if (providers.length === 0) {
-    process.stdout.write(
-      'No configured model groups or stored API keys found.\n'
-    )
+    console.log('No configured model groups or stored API keys found.')
     return
   }
 
@@ -30,10 +28,8 @@ export async function listModelsCommand() {
       typeof entry === 'string' ? entry : entry.name
     )
 
-    process.stdout.write(`${provider}\n`)
-    process.stdout.write(`  key: ${maskApiKey(storedKey)}\n`)
-    process.stdout.write(
-      `  models: ${modelNames.length > 0 ? modelNames.join(', ') : '(none configured)'}\n\n`
+    console.log(
+      `${provider}\n  key: ${maskApiKey(storedKey)}\n  models: ${modelNames.length > 0 ? modelNames.join(', ') : '(none configured)'}\n`
     )
   }
 }

@@ -1,19 +1,15 @@
-import { checkbox, confirm, input } from '@inquirer/prompts'
+import { checkbox, confirm, input, password, select } from '@inquirer/prompts'
 import chalk from 'chalk'
 import readline from 'node:readline'
-import { AppUserCanceledError } from '../lib/errors'
-import type { getRepositoryState } from '../lib/git'
-import type { getConfiguredModelOptions } from '../models/options'
+import { AppUserCanceledError } from './errors'
+import type { SelectedModel } from './models'
 
-type RepositoryState = Awaited<ReturnType<typeof getRepositoryState>>
-type ModelOption = ReturnType<typeof getConfiguredModelOptions>[number]
-
-export async function promptForFilesToStage(repositoryState: RepositoryState) {
-  process.stdout.write(`${chalk.bold('branch:')} ${repositoryState.branch}\n\n`)
+export async function promptForFilesToStage(branch: string, files: string[]) {
+  console.log(`${chalk.bold('branch:')} ${branch}\n`)
 
   return checkbox({
     message: 'changes (press enter with no selection to stage all):',
-    choices: repositoryState.files.map((file) => ({
+    choices: files.map((file) => ({
       name: file,
       value: file,
     })),
@@ -22,28 +18,33 @@ export async function promptForFilesToStage(repositoryState: RepositoryState) {
 }
 
 export async function promptForCommitMessageInput(
-  modelOptions: ReturnType<typeof getConfiguredModelOptions>,
-  defaultModel?: ModelOption
+  modelOptions: SelectedModel[],
+  defaultModel?: SelectedModel
 ) {
   const initialIndex = defaultModel
     ? Math.max(
-        modelOptions.findIndex((model) => model.id === defaultModel.id),
+        modelOptions.findIndex(
+          (model) =>
+            model.provider === defaultModel.provider &&
+            model.name === defaultModel.name &&
+            model.reasoning === defaultModel.reasoning
+        ),
         0
       )
     : 0
 
   if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') {
     const message = await input({
-      message: `Commit message (enter = use typed message, empty = generate${modelOptions[initialIndex] ? ` | model: ${modelOptions[initialIndex].label}` : ''})`,
+      message: `Commit message (enter = use typed message, empty = generate${modelOptions[initialIndex] ? ` | model: ${modelOptions[initialIndex].provider}:${modelOptions[initialIndex].name}` : ''})`,
     })
 
     return {
       message: message.trim(),
-      activeModel: modelOptions[initialIndex],
+      selectedModel: modelOptions[initialIndex],
     }
   }
 
-  return new Promise<{ message: string; activeModel?: ModelOption }>(
+  return new Promise<{ message: string; selectedModel?: SelectedModel }>(
     (resolve, reject) => {
       const stdin = process.stdin
       let currentValue = ''
@@ -57,7 +58,7 @@ export async function promptForCommitMessageInput(
         readline.clearLine(process.stdout, 0)
         readline.cursorTo(process.stdout, 0)
         process.stdout.write(
-          `Commit message (enter = use typed message, empty = generate${modelOptions[activeIndex] ? ` | model: ${modelOptions[activeIndex].label}` : ''}) ${currentValue}`
+          `Commit message (enter = use typed message, empty = generate${modelOptions[activeIndex] ? ` | model: ${modelOptions[activeIndex].provider}:${modelOptions[activeIndex].name}` : ''}) ${currentValue}`
         )
       }
 
@@ -80,7 +81,7 @@ export async function promptForCommitMessageInput(
           cleanup()
           resolve({
             message: currentValue.trim(),
-            activeModel: modelOptions[activeIndex],
+            selectedModel: modelOptions[activeIndex],
           })
           return
         }
@@ -116,7 +117,7 @@ export async function promptForCommitMessageInput(
 }
 
 export async function promptForGeneratedCommitAction(message: string) {
-  process.stdout.write(`\n${chalk.bold('generated:')} ${message}\n`)
+  console.log(`\n${chalk.bold('generated:')} ${message}`)
 
   function mapResponse(value: string) {
     const normalized = value.trim().toLowerCase()
@@ -150,9 +151,7 @@ export async function promptForGeneratedCommitAction(message: string) {
     readline.emitKeypressEvents(stdin)
     stdin.setRawMode(true)
     stdin.resume()
-    process.stdout.write(
-      'Press enter or y to accept, n to cancel, r to regenerate.\n'
-    )
+    console.log('Press enter or y to accept, n to cancel, r to regenerate.')
 
     function cleanup() {
       stdin.off('keypress', onKeypress)
@@ -184,5 +183,52 @@ export async function promptForPostCommand(commandLabel: string) {
   return confirm({
     message: `Run post command: ${commandLabel}?`,
     default: true,
+  })
+}
+
+export async function promptForProviderSelection(providers: string[]) {
+  const customProviderValue = '__custom__'
+  const selected = await select({
+    message: 'Choose a provider or custom base URL',
+    choices: [
+      ...providers.map((provider) => ({
+        name: provider,
+        value: provider,
+      })),
+      {
+        name: 'Custom base URL',
+        value: customProviderValue,
+      },
+    ],
+  })
+
+  if (selected !== customProviderValue) {
+    return selected
+  }
+
+  const baseUrl = await input({
+    message: 'Custom base URL',
+    validate: (value) => {
+      try {
+        const url = new URL(value)
+
+        return url.protocol === 'https:'
+          ? true
+          : 'Custom base URLs must use https.'
+      } catch {
+        return 'Enter a valid https URL.'
+      }
+    },
+  })
+
+  return baseUrl.trim()
+}
+
+export async function promptForApiKey(provider: string) {
+  return password({
+    message: `API key for ${provider}`,
+    mask: '*',
+    validate: (value) =>
+      value.trim().length > 0 ? true : 'API key cannot be empty.',
   })
 }

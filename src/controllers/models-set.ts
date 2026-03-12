@@ -1,8 +1,8 @@
-import { loadConfig } from '../../lib/load-load'
-import { setStoredApiKey } from '../keys'
-import { promptForApiKey, promptForProviderSelection } from '../prompts'
+import { loadConfig } from '../lib/load-config'
+import { promptForApiKey, promptForProviderSelection } from '../lib/prompts'
+import { setStoredApiKey } from '../lib/secrets'
 
-export async function setModelKeyCommand(
+export async function setModelsController(
   providerArgument?: string,
   apiKeyArgument?: string
 ) {
@@ -24,5 +24,5 @@ export async function setModelKeyCommand(
 
   await setStoredApiKey(provider, apiKey)
 
-  process.stdout.write(`Stored API key for ${provider}.\n`)
+  console.log(`Stored API key for ${provider}.`)
 }
