@@ -97,7 +97,7 @@ Use a JSON config file.
 ### Config Fields (~/.config/gityo.json)
 
 - `models`: record of available model groups.
-  - Keys: `openai`, `anthropic`, `openrouter`, `kilo`, or a custom base URL.
+  - Keys: `openai`, `anthropic`, `openrouter`, or a custom base URL.
   - Values: arrays of model names.
 - `defaultModel`: model used by default for commit message generation.
 - `autoAcceptCommitMessage`: if `true`, accept generated commit messages automatically; otherwise ask for confirmation.
