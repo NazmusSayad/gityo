@@ -1,3 +1,5 @@
-export default 'Hello World'
-export const foo = 'bar'
-export const baz = 42
+#!/usr/bin/env node
+
+import { startCli } from './cli'
+
+void startCli(process.argv.slice(2))
