@@ -14,7 +14,10 @@
     "dev:tsc": "tsc --noEmit --watch"
   },
   "bin": {
-    "gityo": "./dist/index.mjs"
+    "gityo": "./dist/index.js"
+  },
+  "dependencies": {
+    "keytar": "^7.9.0"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "^3.0.58",
@@ -38,7 +41,6 @@
     "eslint-plugin-prettier": "^5.5.4",
     "execa": "^9.6.1",
     "husky": "^9.1.7",
-    "keytar": "^7.9.0",
     "noarg": "^3.1.9",
     "prettier": "^3.6.2",
     "prettier-plugin-organize-imports": "^4.3.0",
