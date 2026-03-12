@@ -94,7 +94,7 @@ Notes:
 
 Use a JSON config file.
 
-### Config Fields
+### Config Fields (~/.config/gityo.json)
 
 - `models`: record of available model groups.
   - Keys: `openai`, `anthropic`, `openrouter`, `kilo`, or a custom base URL.
@@ -103,6 +103,17 @@ Use a JSON config file.
 - `autoAcceptCommitMessage`: if `true`, accept generated commit messages automatically; otherwise ask for confirmation.
 - `postCommand`: `push` or `push-and-pull`.
 - `autoRunPostCommand`: if `true`, run the post command automatically; otherwise prompt first.
+- `customInstructions`: optional string of custom instructions to include in the prompt for commit message generation.
+
+#### Project Level Config (.gityo.config.json)
+
+- Same structure as the global config.
+- Overrides global config when present.
+
+#### Project Level Instructions (.gityo.instructions.md)
+
+- Optional markdown file for project-specific instructions.
+- Overrides `customInstructions` in the JSON config (both global and project-level) when present.
 
 ## API Key Management
 
