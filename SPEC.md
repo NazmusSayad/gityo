@@ -12,6 +12,7 @@ gityo is a CLI tool that helps developers stage and commit their changes in a mo
     - Value: array of model names
   - default model: the default model to use for generating commit messages
   - postCommand: `push` | `push-and-pull`
+  - autoRunPostCommand: boolean to determine if the post command should be run automatically after committing or if the user should be prompted to run it.
 - Secure api key.. api key wont be saved in the config. when using that model the user will be prompted to enter then api key.. then it will be saved in a safe place.. and then it will be used later.. also using `gityo models` user can update the api keys (eg: `eg: gityo models set openai sk-xxxx`, or `eg: gityo models set https://custom-base-url sk-xxxx`) or just using `gityo models set` will open the interactive prompt to update the keys. `gityo models list` will list the models with the associated keys (masking the keys for security)
 
 ## Flow
@@ -67,7 +68,7 @@ feat(auth): add auth guard middleware
 User confirms:
 
 ```
-commit? (y/n)
+commit? (y/n/enter)
 > y
 ```
 
@@ -86,3 +87,7 @@ Configurable from the config file. By default, it is git push
 ```
 git push
 ```
+
+## Test
+
+- create a docker env to test this things reliablity.. no need for auth just if things are working correcly.. maybe you can fake git commands just to ttest the cli
