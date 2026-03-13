@@ -42,7 +42,7 @@ export async function promptForGeneratedCommitAction() {
 
 export async function promptForFilesToStage(files: string[]) {
   return checkbox({
-    message: `Select files to stage ${chalk.reset.dim('(Enter = All)')}`,
+    message: `Select files to stage ${chalk.reset.dim('(⏎ submit)')}`,
     choices: files.map((file) => ({
       name: file,
       value: file,
@@ -63,7 +63,7 @@ export async function promptForCommitMessageInput(model?: {
   name: string
 }) {
   const message = await input({
-    message: `Commit message ${chalk.reset.dim(`(Enter=Submit${model ? ` • ${model.provider}:${model.name}` : ''})`)}`,
+    message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.provider}:${model.name}` : ''})`)}`,
     theme: selectionTheme,
   })
 
