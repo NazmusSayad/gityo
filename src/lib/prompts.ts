@@ -60,6 +60,12 @@ export async function promptForCommitMessageInput(
       let currentValue = ''
       let activeIndex = initialIndex
       let renderedLineCount = 0
+      const modifiedEnterSequences = new Set([
+        '\u001b[13;2u',
+        '\u001b[13;5u',
+        '\u001b[27;2;13~',
+        '\u001b[27;5;13~',
+      ])
 
       readline.emitKeypressEvents(stdin)
       stdin.setRawMode(true)
@@ -90,13 +96,15 @@ export async function promptForCommitMessageInput(
         const selectedModel = modelOptions[activeIndex]
           ? `${modelOptions[activeIndex].provider}:${modelOptions[activeIndex].name}`
           : 'none'
-        const header = chalk.blue('󰜘 Commit message')
-        const help = chalk.gray(
-          'Enter=submit • Shift+Enter/Ctrl+Enter=new line • Tab switch model • empty=generate'
-        )
-        const modelLine = `${chalk.cyan('󰒲 Model')} ${chalk.white(selectedModel)}`
-        const value = currentValue.length > 0 ? currentValue : chalk.gray('')
-        const ui = `${header}\n${help}\n${modelLine}\n\n${value}`
+
+        const ui = [
+          `${chalk.blue('󰜘 Commit message')} ${chalk.gray(
+            '(Tab switch model • Enter=submit • +Enter/^Enter=new line)'
+          )}`,
+
+          `${chalk.cyan('󰒲 Model')} ${chalk.white(selectedModel)}`,
+          currentValue.length > 0 ? currentValue : chalk.gray(''),
+        ].join('\n')
 
         process.stdout.write(ui)
         renderedLineCount = ui.split('\n').length
@@ -104,9 +112,15 @@ export async function promptForCommitMessageInput(
 
       function cleanup() {
         stdin.off('keypress', onKeypress)
+        process.off('SIGINT', onSigint)
         stdin.setRawMode(false)
         clearRenderedBlock()
         process.stdout.write('\n')
+      }
+
+      function onSigint() {
+        cleanup()
+        reject(new AppUserCanceledError())
       }
 
       function onKeypress(chunk: string, key: readline.Key) {
@@ -116,14 +130,9 @@ export async function promptForCommitMessageInput(
           return
         }
 
-        const modifiedEnterSequences = new Set([
-          '\u001b[13;2u',
-          '\u001b[13;5u',
-          '\u001b[27;2;13~',
-          '\u001b[27;5;13~',
-        ])
-
         if (
+          (key.shift && (key.name === 'return' || key.name === 'enter')) ||
+          (key.ctrl && (key.name === 'return' || key.name === 'enter')) ||
           key.name === 'linefeed' ||
           (key.ctrl && key.name === 'j') ||
           (key.meta && (key.name === 'return' || key.name === 'enter')) ||
@@ -170,6 +179,7 @@ export async function promptForCommitMessageInput(
       }
 
       render()
+      process.on('SIGINT', onSigint)
       stdin.on('keypress', onKeypress)
     }
   )
@@ -216,7 +226,13 @@ export async function promptForGeneratedCommitAction(message: string) {
 
     function cleanup() {
       stdin.off('keypress', onKeypress)
+      process.off('SIGINT', onSigint)
       stdin.setRawMode(false)
+    }
+
+    function onSigint() {
+      cleanup()
+      reject(new AppUserCanceledError())
     }
 
     function onKeypress(chunk: string, key: readline.Key) {
@@ -236,6 +252,7 @@ export async function promptForGeneratedCommitAction(message: string) {
       resolve(action)
     }
 
+    process.on('SIGINT', onSigint)
     stdin.on('keypress', onKeypress)
   })
 }
