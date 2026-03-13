@@ -32,16 +32,17 @@ type SelectedModel = {
 export async function mainController() {
   const cwd = process.cwd()
   await ensureInsideGitRepo(cwd)
+
   const repoRoot = await getRepositoryRoot(cwd)
   const config = await loadConfig(repoRoot)
-  const branch = await getCurrentBranch(repoRoot)
-  const files = await getChangedFiles(repoRoot)
 
+  const files = await getChangedFiles(repoRoot)
   if (files.length === 0) {
     console.log('No changed files found.')
     return
   }
 
+  const branch = await getCurrentBranch(repoRoot)
   console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}\n`)
 
   const selectedFiles = await promptForFilesToStage(files)
@@ -87,35 +88,31 @@ export async function mainController() {
       console.log(chalk.white(finalCommitMessage))
 
       if (config.autoAcceptCommitMessage) {
+        console.log(chalk.green(` Accepted generated commit message`))
         break
       }
 
       const action = await promptForGeneratedCommitAction()
-
-      if (action === 'accept') {
+      if (action === 'accept' || action === 'cancel') {
         break
       }
-
-      if (action === 'cancel') {
-        console.log('Commit cancelled.')
-        return
-      }
     }
+  }
+
+  if (finalCommitMessage.length === 0) {
+    throw new Error('Commit message cannot be empty.')
   }
 
   await commitChanges(finalCommitMessage, repoRoot)
   console.log('')
 
-  const shouldRunPostCommand =
-    config.autoRunPostCommand ||
-    (await promptForPostCommand(
-      config.postCommand === 'push'
-        ? 'git push'
-        : 'git push && git pull --rebase'
-    ))
-
-  if (!shouldRunPostCommand) {
-    return
+  if (config.autoRunPostCommand) {
+    console.log(chalk.green(` Accepted post command: ${config.postCommand}`))
+  } else {
+    const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
+    if (!shouldRunPostCommand) {
+      return
+    }
   }
 
   await runPostCommand(config.postCommand, repoRoot)
@@ -130,6 +127,7 @@ async function promptForModelConfig(): Promise<SelectedModel> {
     'openai',
     'openrouter',
   ])
+
   const name = await promptForModelName()
   const apiKey = await promptForApiKey(provider)
 
