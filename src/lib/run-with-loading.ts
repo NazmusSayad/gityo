@@ -12,7 +12,7 @@ export async function runWithLoading<T>(label: string, task: () => Promise<T>) {
   const interval = setInterval(() => {
     readline.cursorTo(process.stdout, 0)
     process.stdout.write(
-      `${chalk.cyan(frames[index])} ${chalk.cyan(label)} ${chalk.gray('...')}`
+      `${chalk.cyan(frames[index])} ${chalk.cyan(label)} ${chalk.reset.dim('...')}`
     )
     index = (index + 1) % frames.length
   }, 80)

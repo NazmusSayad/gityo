@@ -77,7 +77,7 @@ export async function mainController() {
 
       console.log(
         chalk.magenta('󰚩 Generated message'),
-        chalk.gray(
+        chalk.reset.dim(
           `(${prettyMilliseconds(Date.now() - startedAt, {
             secondsDecimalDigits: 1,
             millisecondsDecimalDigits: 0,
@@ -89,7 +89,7 @@ export async function mainController() {
 
       if (config.autoAcceptCommitMessage) {
         console.log('')
-        console.log(chalk.green(` Committing with generated message`))
+        console.log(chalk.green.dim(` Committing with generated message`))
         break
       }
 
@@ -108,7 +108,7 @@ export async function mainController() {
   console.log('')
 
   if (config.autoRunPostCommand) {
-    console.log(chalk.green(` Executing: ${config.postCommand}`))
+    console.log(chalk.green.dim(` Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
     if (!shouldRunPostCommand) {

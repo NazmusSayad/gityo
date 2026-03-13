@@ -39,7 +39,7 @@ export async function promptForGeneratedCommitAction() {
 
   return mapResponse(
     await input({
-      message: `${'Accept generated commit message?'} ${chalk.gray('[Y/n/r]')}`,
+      message: `${'Accept generated commit message?'} ${chalk.reset.dim('[Y/n/r]')}`,
       theme: selectionTheme,
     })
   )
@@ -47,7 +47,7 @@ export async function promptForGeneratedCommitAction() {
 
 export async function promptForFilesToStage(files: string[]) {
   return checkbox({
-    message: `Select files to stage ${chalk.gray('(Enter = all)')}`,
+    message: `Select files to stage ${chalk.reset.dim('(Enter = all)')}`,
     choices: files.map((file) => ({
       name: file,
       value: file,
@@ -65,7 +65,7 @@ export async function promptForFilesToStage(files: string[]) {
 
 export async function promptForCommitMessageInput(model: SelectedModel) {
   const message = await input({
-    message: `Commit message ${chalk.gray(`(Enter=submit • model: ${model.provider}:${model.name})`)}`,
+    message: `Commit message ${chalk.reset.dim(`(Enter=submit • model: ${model.provider}:${model.name})`)}`,
     theme: selectionTheme,
   })
 
