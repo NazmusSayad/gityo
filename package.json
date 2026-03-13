@@ -6,8 +6,6 @@
   "scripts": {
     "lint": "tsc --noEmit && eslint .",
     "fix": "tsc --noEmit && eslint . --fix",
-    "test": "pnpm build && docker build --file ./Dockerfile.test --tag gityo-test . && docker run --rm gityo-test",
-    "test:docker": "pnpm build && docker build --file ./Dockerfile.test --tag gityo-test . && docker run --rm gityo-test",
     "start": "tsx --watch ./src/index.ts",
     "build": "tsdown --config ./tsdown.config.ts",
     "dev": "concurrently --names \"R,T\" --prefix-colors \"blue.dim,magenta.dim\" \"tsdown --config ./tsdown.config.ts --watch\" \"tsc --noEmit --watch\"",
