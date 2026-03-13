@@ -1,3 +1,4 @@
+import { SUPPORTED_PROVIDERS } from '@/schema'
 import {
   readGlobalConfig,
   readProjectConfig,
@@ -27,12 +28,10 @@ export async function setConfigModelController(
   const provider =
     providerArgument?.trim() ??
     (await promptForProviderSelection([
-      'anthropic',
-      'google',
-      'openai',
-      'openrouter',
+      ...SUPPORTED_PROVIDERS,
       ...(config.model ? [config.model.provider] : []),
     ]))
+
   const name = (modelNameArgument ?? (await promptForModelName())).trim()
   const apiKey = (apiKeyArgument ?? (await promptForApiKey(provider))).trim()
 

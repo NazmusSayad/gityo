@@ -1,15 +1,19 @@
 import { z } from 'zod'
 
+const BUILTIN_PROVIDERS = ['openai', 'anthropic', 'google'] as const
+const COMPATIBLE_PROVIDERS = ['openrouter', 'kilo'] as const
+export const SUPPORTED_PROVIDERS = [
+  ...BUILTIN_PROVIDERS,
+  ...COMPATIBLE_PROVIDERS,
+] as const
+
 export const configSchema = z
   .object({
     $schema: z.url(),
 
     model: z.object({
       provider: z.union([
-        z.literal('openai'),
-        z.literal('anthropic'),
-        z.literal('google'),
-        z.literal('openrouter'),
+        ...SUPPORTED_PROVIDERS.map((p) => z.literal(p)),
         z.url(),
       ]),
 

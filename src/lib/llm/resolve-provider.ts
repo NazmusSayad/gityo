@@ -25,6 +25,14 @@ export function resolveAiProvider(provider: string, apiKey: string) {
     })
   }
 
+  if (provider === 'kilo') {
+    return createOpenAICompatible({
+      name: 'Kilo',
+      baseURL: 'https://api.kilo.ai/api/gateway',
+      apiKey,
+    })
+  }
+
   const isUrl = z.url().safeParse(provider).success
   if (isUrl) {
     return createOpenAICompatible({
@@ -33,4 +41,6 @@ export function resolveAiProvider(provider: string, apiKey: string) {
       apiKey,
     })
   }
+
+  return null
 }

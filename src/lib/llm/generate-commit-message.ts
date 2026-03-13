@@ -1,6 +1,6 @@
 import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible'
 import { generateText } from 'ai'
-import type { ResolvedConfig } from '../../schema'
+import { SUPPORTED_PROVIDERS, type ResolvedConfig } from '../../schema'
 import { getStagedDiff } from '../git'
 import { resolveAiProvider } from './resolve-provider'
 import systemPrompt from './system-prompt.txt?raw'
@@ -19,7 +19,7 @@ export async function generateCommitMessage(
   const provider = resolveAiProvider(model.provider, model.key)
   if (!provider) {
     throw new Error(
-      `Unsupported model provider '${provider}'. Use openai, anthropic, google, openrouter, or an https base URL.`
+      `Unsupported model provider '${provider}'. Use ${SUPPORTED_PROVIDERS.join(', ')} or an https base URL.`
     )
   }
 
