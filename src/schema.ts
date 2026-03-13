@@ -1,40 +1,41 @@
 import { z } from 'zod'
 
-export const postCommandSchema = z.enum(['push', 'push-and-pull'])
+const configSchema = z.object({
+  $schema: z.url(),
 
-export const modelEntrySchema = z.union([
-  z.string().min(1),
-  z.object({
+  model: z.object({
+    provider: z.union([
+      z.literal('openai'),
+      z.literal('anthropic'),
+      z.literal('google'),
+      z.literal('openrouter'),
+      z.url(),
+    ]),
+
     name: z.string().min(1),
-    reasoning: z.union([z.boolean(), z.string().min(1)]).optional(),
+
+    reasoning: z.union([z.boolean(), z.string().min(1)]).default(false),
   }),
-])
 
-export const modelGroupSchema = z.record(
-  z.string().min(1),
-  z.array(modelEntrySchema)
-)
+  autoAcceptCommitMessage: z.boolean(),
+  customInstructions: z.string().min(1),
 
-export const configSchema = z
-  .object({
-    $schema: z.url().optional(),
+  postCommand: z.enum(['push', 'push-and-pull']),
+  autoRunPostCommand: z.boolean(),
+})
 
-    models: modelGroupSchema.default({}),
+export function resolveConfig(input: unknown) {
+  const parsed = configSchema.parse(input)
 
-    autoAcceptCommitMessage: z.boolean().default(false),
-    customInstructions: z.string().min(1).optional(),
+  return {
+    model: parsed.model,
 
-    postCommand: postCommandSchema.default('push'),
-    autoRunPostCommand: z.boolean().default(false),
-  })
-  .default({
-    models: {},
+    customInstructions: parsed.customInstructions,
+    autoAcceptCommitMessage: parsed.autoAcceptCommitMessage ?? false,
 
-    autoAcceptCommitMessage: false,
-    customInstructions: undefined,
+    postCommand: parsed.postCommand ?? 'push',
+    autoRunPostCommand: parsed.autoRunPostCommand ?? false,
+  }
+}
 
-    postCommand: 'push',
-    autoRunPostCommand: false,
-  })
-
-export type ConfigSchema = z.infer<typeof configSchema>
+export type ResolvedConfig = ReturnType<typeof resolveConfig>
