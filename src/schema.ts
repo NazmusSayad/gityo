@@ -25,11 +25,11 @@ const configSchema = z.object({
 })
 
 export function generateJSONSchema() {
-  return configSchema.toJSONSchema()
+  return configSchema.partial().toJSONSchema()
 }
 
 export function resolveConfig(input: unknown) {
-  const parsed = configSchema.parse(input)
+  const parsed = configSchema.partial().parse(input)
 
   return {
     model: parsed.model,
