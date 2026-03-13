@@ -24,6 +24,10 @@ const configSchema = z.object({
   autoRunPostCommand: z.boolean(),
 })
 
+export function generateJSONSchema() {
+  return configSchema.toJSONSchema()
+}
+
 export function resolveConfig(input: unknown) {
   const parsed = configSchema.parse(input)
 

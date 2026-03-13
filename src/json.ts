@@ -1,12 +1,13 @@
 import fs from 'fs'
 import path from 'path'
-import { configSchema } from './schema'
+import { generateJSONSchema } from './schema'
 
-const schema = configSchema.toJSONSchema()
 const outputPath = path.resolve('./schema.json')
 
 if (fs.existsSync(outputPath)) {
   fs.rmSync(outputPath)
 }
 
-fs.writeFileSync(outputPath, JSON.stringify(schema))
+const jsonSchema = generateJSONSchema()
+const jsonString = JSON.stringify(jsonSchema, null, 2)
+fs.writeFileSync(outputPath, jsonString)
