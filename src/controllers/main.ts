@@ -9,6 +9,10 @@ import {
 import { generateCommitMessage } from '../lib/llm/generate-commit-message'
 import { loadConfig } from '../lib/load-config'
 import {
+  getLastUsedModel,
+  setLastUsedModel,
+} from '../lib/model-selection-state'
+import {
   promptForCommitMessageInput,
   promptForFilesToStage,
   promptForGeneratedCommitAction,
@@ -50,19 +54,37 @@ export async function mainController() {
     }
   }
 
-  const defaultModelIndex = 0
+  const lastUsedModel = await getLastUsedModel()
+  const defaultModelIndex =
+    lastUsedModel === undefined
+      ? 0
+      : Math.max(
+          modelOptions.findIndex(
+            (option) =>
+              option.provider === lastUsedModel.provider &&
+              option.name === lastUsedModel.name
+          ),
+          0
+        )
 
   const commitMessageInput = await promptForCommitMessageInput(
     modelOptions,
     defaultModelIndex
   )
 
+  const selectedModel =
+    modelOptions[commitMessageInput.selectedModelIndex ?? defaultModelIndex]
+
+  if (selectedModel) {
+    await setLastUsedModel({
+      provider: selectedModel.provider,
+      name: selectedModel.name,
+    })
+  }
+
   let commitMessage = commitMessageInput.message
 
   if (commitMessage.length === 0) {
-    const selectedModel =
-      modelOptions[commitMessageInput.selectedModelIndex ?? defaultModelIndex]
-
     if (!selectedModel) {
       throw new Error('No models are configured for commit message generation.')
     }
