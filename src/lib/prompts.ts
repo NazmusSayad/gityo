@@ -64,16 +64,18 @@ export async function promptForCommitMessageInput(model?: {
 }) {
   const message = await input({
     message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.provider}:${model.name}` : ''})`)}`,
+    transformer: (value, { isFinal }) => {
+      if (value.length === 0) {
+        return isFinal ? '' : '\n'
+      }
+
+      return chalk.magenta.dim(`\n${value}`)
+    },
     theme: {
       ...selectionTheme,
       style: {
         ...selectionTheme.style,
-        message: (txt: string, status: 'idle' | 'done') =>
-          status === 'idle'
-            ? `${selectionTheme.style.message(txt, status)}\n`
-            : selectionTheme.style.message(txt, status),
-        answer: (input: string) =>
-          input.length === 0 ? '' : chalk.magenta.dim(`\n${input}`),
+        answer: () => '',
       },
     },
   })
