@@ -1,9 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { configSchema } from '../schema'
-
-const configFileSchema = configSchema.unwrap().partial()
+import { configSchema, resolveConfig } from '../schema'
 
 export async function loadConfig(cwd = process.cwd()) {
   const [globalConfig, projectConfig, projectInstructions] = await Promise.all([
@@ -12,18 +10,9 @@ export async function loadConfig(cwd = process.cwd()) {
     readInstructionsFile(path.join(cwd, '.gityo.instructions.md')),
   ])
 
-  return configSchema.parse({
-    models: {
-      ...(globalConfig?.models ?? {}),
-      ...(projectConfig?.models ?? {}),
-    },
-
-    autoAcceptCommitMessage:
-      projectConfig?.autoAcceptCommitMessage ??
-      globalConfig?.autoAcceptCommitMessage,
-    postCommand: projectConfig?.postCommand ?? globalConfig?.postCommand,
-    autoRunPostCommand:
-      projectConfig?.autoRunPostCommand ?? globalConfig?.autoRunPostCommand,
+  return resolveConfig({
+    ...(globalConfig ?? {}),
+    ...(projectConfig ?? {}),
     customInstructions:
       projectInstructions ??
       projectConfig?.customInstructions ??
@@ -54,7 +43,7 @@ async function readConfigFile(filePath: string) {
     )
   }
 
-  const result = configFileSchema.safeParse(parsed)
+  const result = configSchema.safeParse(parsed)
 
   if (!result.success) {
     throw new Error(`Invalid config in ${filePath}: ${result.error.message}`)
