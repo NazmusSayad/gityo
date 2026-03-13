@@ -53,7 +53,13 @@ export async function promptForFilesToStage(files: string[]) {
       value: file,
     })),
     pageSize: 12,
-    theme: selectionTheme,
+    theme: {
+      ...selectionTheme,
+      style: {
+        ...selectionTheme.style,
+        answer: () => '',
+      },
+    },
   })
 }
 

@@ -18,6 +18,7 @@ import {
   promptForPostCommand,
   promptForProviderSelection,
 } from '../lib/prompts'
+import { runWithLoading } from '../lib/run-with-loading'
 import { setStoredApiKey } from '../lib/secrets'
 
 type SelectedModel = {
@@ -42,6 +43,7 @@ export async function mainController() {
 
   const selectedFiles = await promptForFilesToStage(files)
   const filesToStage = selectedFiles.length > 0 ? selectedFiles : files
+  console.log(filesToStage.join('\n'))
   console.log('')
 
   await stageFiles(filesToStage, cwd)
@@ -57,11 +59,11 @@ export async function mainController() {
   let finalCommitMessage = await promptForCommitMessageInput(selectedModel)
 
   if (finalCommitMessage.length === 0) {
-    console.log('')
-
     while (true) {
       finalCommitMessage = (
-        await generateCommitMessage(cwd, config, selectedModel)
+        await runWithLoading('Generating commit message', () =>
+          generateCommitMessage(cwd, config, selectedModel)
+        )
       ).text
 
       if (finalCommitMessage.length === 0) {
@@ -69,7 +71,7 @@ export async function mainController() {
       }
 
       console.log(
-        `${chalk.magenta('󰚩 Generated message')} ${chalk.white(finalCommitMessage)}`
+        `${chalk.magenta('󰚩 Generated message')}\n${chalk.white(finalCommitMessage)}`
       )
 
       if (config.autoAcceptCommitMessage) {
@@ -89,6 +91,7 @@ export async function mainController() {
     }
   }
 
+  console.log('')
   await commitChanges(finalCommitMessage, cwd)
   console.log('')
 
@@ -103,8 +106,6 @@ export async function mainController() {
   if (!shouldRunPostCommand) {
     return
   }
-
-  console.log('')
 
   await runPostCommand(config.postCommand, cwd)
 }
