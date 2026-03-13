@@ -12,22 +12,12 @@ import {
 import { generateCommitMessage } from '../lib/llm/generate-commit-message'
 import { loadConfig } from '../lib/load-config'
 import {
-  promptForApiKey,
   promptForCommitMessageInput,
   promptForFilesToStage,
   promptForGeneratedCommitAction,
-  promptForModelName,
   promptForPostCommand,
-  promptForProviderSelection,
 } from '../lib/prompts'
 import { runWithLoading } from '../lib/run-with-loading'
-import { setStoredApiKey } from '../lib/secrets'
-
-type SelectedModel = {
-  provider: string
-  name: string
-  reasoning?: boolean | string
-}
 
 export async function mainController() {
   const cwd = process.cwd()
@@ -52,17 +42,11 @@ export async function mainController() {
 
   await stageFiles(filesToStage, repoRoot)
 
-  const selectedModel: SelectedModel = config.model
-    ? {
-        provider: config.model.provider,
-        name: config.model.name,
-        reasoning: config.model.reasoning,
-      }
-    : await promptForModelConfig()
-
-  let finalCommitMessage = await promptForCommitMessageInput(selectedModel)
+  let finalCommitMessage = await promptForCommitMessageInput(config.model)
 
   if (finalCommitMessage.length === 0) {
+    // Check the selected model, not none is there or api key not here throw error, and explain the user how we can add models
+
     while (true) {
       const startedAt = Date.now()
       finalCommitMessage = (
@@ -117,26 +101,4 @@ export async function mainController() {
   }
 
   await runPostCommand(config.postCommand, repoRoot)
-}
-
-async function promptForModelConfig(): Promise<SelectedModel> {
-  console.log('No model configured. Enter model details for this run.')
-
-  const provider = await promptForProviderSelection([
-    'anthropic',
-    'google',
-    'openai',
-    'openrouter',
-  ])
-
-  const name = await promptForModelName()
-  const apiKey = await promptForApiKey(provider)
-
-  await setStoredApiKey(provider, apiKey.trim())
-
-  return {
-    provider,
-    name: name.trim(),
-    reasoning: false,
-  }
 }

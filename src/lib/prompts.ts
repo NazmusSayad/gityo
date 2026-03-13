@@ -1,11 +1,6 @@
 import { checkbox, confirm, input, password, select } from '@inquirer/prompts'
 import chalk from 'chalk'
 
-type SelectedModel = {
-  provider: string
-  name: string
-}
-
 const selectionTheme = {
   prefix: {
     idle: chalk.blue('?'),
@@ -47,7 +42,7 @@ export async function promptForGeneratedCommitAction() {
 
 export async function promptForFilesToStage(files: string[]) {
   return checkbox({
-    message: `Select files to stage ${chalk.reset.dim('(Enter = all)')}`,
+    message: `Select files to stage ${chalk.reset.dim('(Enter = All)')}`,
     choices: files.map((file) => ({
       name: file,
       value: file,
@@ -63,9 +58,12 @@ export async function promptForFilesToStage(files: string[]) {
   })
 }
 
-export async function promptForCommitMessageInput(model: SelectedModel) {
+export async function promptForCommitMessageInput(model?: {
+  provider: string
+  name: string
+}) {
   const message = await input({
-    message: `Commit message ${chalk.reset.dim(`(Enter=submit • model: ${model.provider}:${model.name})`)}`,
+    message: `Commit message ${chalk.reset.dim(`(Enter=Submit${model ? ` • ${model.provider}:${model.name}` : ''})`)}`,
     theme: selectionTheme,
   })
 
