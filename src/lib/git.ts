@@ -14,10 +14,24 @@ export async function ensureInsideGitRepo(cwd = process.cwd()) {
 }
 
 export async function getCurrentBranch(cwd = process.cwd()) {
-  const result = await runGit(['rev-parse', '--abbrev-ref', 'HEAD'], cwd)
-  const branch = result.stdout.trim()
+  const result = await execa(
+    'git',
+    ['symbolic-ref', '--quiet', '--short', 'HEAD'],
+    {
+      cwd,
+      reject: false,
+    }
+  )
 
-  return branch === 'HEAD' ? '(detached HEAD)' : branch
+  if (result.exitCode === 0) {
+    return result.stdout.trim()
+  }
+
+  if (result.exitCode === 1) {
+    return '(detached HEAD)'
+  }
+
+  throw new Error(result.stderr.trim() || 'Git command failed.')
 }
 
 export async function getChangedFiles(cwd = process.cwd()) {
