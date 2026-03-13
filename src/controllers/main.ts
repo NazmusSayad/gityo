@@ -77,7 +77,7 @@ export async function mainController() {
         throw new Error('The selected model returned an empty commit message.')
       }
 
-      console.log(chalk.reset.dim(finalCommitMessage))
+      console.log(chalk.magenta.dim(finalCommitMessage))
 
       if (config.autoAcceptCommitMessage) {
         console.log('')
