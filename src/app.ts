@@ -9,6 +9,30 @@ import { handleError } from './lib/handle-error'
 export const app = NoArg.create('gityo', {
   description:
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.',
+
+  flags: {
+    stage: NoArg.boolean()
+      .aliases('s')
+      .description('Stage all changes without asking.'),
+
+    generate: NoArg.boolean()
+      .aliases('g')
+      .description('Generate a commit message without asking.'),
+
+    message: NoArg.string()
+      .aliases('m')
+      .description('Use the provided message as the commit message.'),
+
+    post: NoArg.boolean()
+      .aliases('p')
+      .description('Run the post-commit git command without asking.'),
+
+    yolo: NoArg.boolean()
+      .aliases('y')
+      .description(
+        'Skip all questions, and stage, generate message, commit, run post command. [Will fail if no model available]'
+      ),
+  },
 })
 
 const configProgram = app.create('config', {
