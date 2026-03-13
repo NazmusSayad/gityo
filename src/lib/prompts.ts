@@ -10,15 +10,27 @@ type SelectedModel = {
 }
 
 export async function promptForFilesToStage(branch: string, files: string[]) {
-  console.log(`${chalk.bold('branch:')} ${branch}\n`)
+  console.log(`${chalk.cyan(' Branch')} ${chalk.white(branch)}\n`)
 
   return checkbox({
-    message: 'changes (press enter with no selection to stage all):',
+    message: `Select files to stage ${chalk.gray('(Enter = all)')}`,
     choices: files.map((file) => ({
       name: file,
       value: file,
     })),
+
     pageSize: 12,
+    theme: {
+      prefix: {
+        idle: chalk.blue('?'),
+        done: chalk.green(''),
+      },
+
+      style: {
+        message: (txt: string, status: 'idle' | 'done') =>
+          status === 'done' ? chalk.green(txt) : chalk.blue(txt),
+      },
+    },
   })
 }
 
@@ -117,7 +129,9 @@ export async function promptForCommitMessageInput(
 }
 
 export async function promptForGeneratedCommitAction(message: string) {
-  console.log(`\n${chalk.bold('generated:')} ${message}`)
+  console.log(
+    `\n${chalk.magenta('󰚩 Generated message')} ${chalk.white(message)}`
+  )
 
   function mapResponse(value: string) {
     const normalized = value.trim().toLowerCase()
