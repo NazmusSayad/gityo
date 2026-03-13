@@ -66,8 +66,10 @@ export async function promptForCommitMessageInput(model?: {
     required: !model?.hasKey,
     message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.name}` : ''})`)}`,
 
-    transformer: (value) =>
-      value.length === 0 ? '' : chalk.magenta.dim(`\n${value}`),
+    transformer: (value) => {
+      return value.length === 0 ? '' : chalk.magenta.dim(`\n${value}`)
+    },
+
     theme: {
       ...selectionTheme,
       style: {
