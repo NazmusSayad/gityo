@@ -2,7 +2,10 @@ import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible'
 import { generateText } from 'ai'
 import type { ResolvedConfig } from '../../schema'
 import { getStagedDiff } from '../git'
-import { resolveLLM } from './resolve-llm'
+import { resolveAiProvider } from './resolve-provider'
+
+import promptTxt from './test.txt?raw'
+console.log(promptTxt)
 
 export async function generateCommitMessage(
   cwd: string,
@@ -29,12 +32,15 @@ export async function generateCommitMessage(
   sections.push(`Staged diff:\n${stagedDiff}`)
   const prompt = sections.join('\n\n')
 
+  const provider = resolveAiProvider(model.provider, model.key)
+  if (!provider) {
+    throw new Error(
+      `Unsupported model provider '${provider}'. Use openai, anthropic, google, openrouter, or an https base URL.`
+    )
+  }
+
   const result = await generateText({
-    model: resolveLLM({
-      provider: model.provider,
-      model: model.name,
-      apiKey: model.key,
-    }),
+    model: provider(model.name),
 
     prompt,
 

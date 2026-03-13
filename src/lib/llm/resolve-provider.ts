@@ -2,10 +2,9 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import type { LanguageModel } from 'ai'
 import z from 'zod'
 
-function resolveAiProvider(provider: string, apiKey: string) {
+export function resolveAiProvider(provider: string, apiKey: string) {
   if (provider === 'openai') {
     return createOpenAI({ apiKey })
   }
@@ -34,19 +33,4 @@ function resolveAiProvider(provider: string, apiKey: string) {
       apiKey,
     })
   }
-}
-
-export function resolveLLM(input: {
-  provider: string
-  apiKey: string
-  model: string
-}): Extract<LanguageModel, { specificationVersion: 'v3' }> {
-  const provider = resolveAiProvider(input.provider, input.apiKey)
-  if (!provider) {
-    throw new Error(
-      `Unsupported model provider '${provider}'. Use openai, anthropic, google, openrouter, or an https base URL.`
-    )
-  }
-
-  return provider(input.model)
 }
