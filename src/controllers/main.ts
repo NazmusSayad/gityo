@@ -39,6 +39,7 @@ export async function mainController() {
 
   const selectedFiles = await promptForFilesToStage(branch, files)
   const filesToStage = selectedFiles.length > 0 ? selectedFiles : files
+  console.log('')
 
   await stageFiles(filesToStage, cwd)
 
@@ -55,6 +56,8 @@ export async function mainController() {
   let commitMessage = commitMessageInput.message
 
   if (commitMessage.length === 0) {
+    console.log('')
+
     while (true) {
       commitMessage = (await generateCommitMessage(cwd, config, selectedModel))
         .text
@@ -81,6 +84,7 @@ export async function mainController() {
   }
 
   await commitChanges(commitMessage, cwd)
+  console.log('')
 
   const shouldRunPostCommand =
     config.autoRunPostCommand ||
@@ -93,6 +97,8 @@ export async function mainController() {
   if (!shouldRunPostCommand) {
     return
   }
+
+  console.log('')
 
   await runPostCommand(config.postCommand, cwd)
 }

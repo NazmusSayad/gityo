@@ -46,9 +46,7 @@ export async function promptForCommitMessageInput(model: SelectedModel) {
 }
 
 export async function promptForGeneratedCommitAction(message: string) {
-  console.log(
-    `\n${chalk.magenta('󰚩 Generated message')} ${chalk.white(message)}`
-  )
+  console.log(`${chalk.magenta('󰚩 Generated message')} ${chalk.white(message)}`)
 
   function mapResponse(value: string) {
     const normalized = value.trim().toLowerCase()
