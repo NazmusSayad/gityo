@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-schema:
-    runs-on: ubuntu-latest
+    runs-on: alpine-latest
     permissions:
       contents: write
     steps:
