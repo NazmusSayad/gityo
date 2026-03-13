@@ -63,6 +63,11 @@ const configSetModelProgram = configSetProgram.create('model', {
 })
 
 app.on((_, options) => {
+  if (options.generate && options.message) {
+    console.error('Cannot use --generate and --message together.')
+    process.exit(1)
+  }
+
   handleError(() => mainController(options))
 })
 

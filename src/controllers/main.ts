@@ -19,12 +19,29 @@ import {
 import { runWithLoading } from '../lib/run-with-loading'
 import { getStoredApiKey } from '../lib/secrets'
 
-export async function mainController() {
+type MainControllerOptions = {
+  generate?: boolean
+  message?: string
+  post?: boolean
+  stage?: boolean
+  yolo?: boolean
+}
+
+export async function mainController(options: MainControllerOptions = {}) {
   const cwd = process.cwd()
   await ensureInsideGitRepo(cwd)
 
   const repoRoot = await getRepositoryRoot(cwd)
   const config = await loadConfig(repoRoot)
+
+  const forceStageEnabled = options.stage || options.yolo
+  const forceLLMGenerate = options.generate || options.yolo
+  const forceExecPostCommand = options.post || options.yolo
+
+  let finalCommitMessage = options.message?.trim() ?? ''
+  if (typeof options.message === 'string' && finalCommitMessage.length === 0) {
+    throw new Error('Provided commit message cannot be empty.')
+  }
 
   const files = await getChangedFiles(repoRoot)
   if (files.length === 0) {
@@ -35,7 +52,14 @@ export async function mainController() {
   const branch = await getCurrentBranch(repoRoot)
   console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}\n`)
 
-  const selectedFiles = await promptForFilesToStage(files)
+  if (forceStageEnabled) {
+    console.log(chalk.yellow.dim(' Staging all files..'))
+  }
+
+  const selectedFiles = forceStageEnabled
+    ? files
+    : await promptForFilesToStage(files)
+
   const filesToStage = selectedFiles.length > 0 ? selectedFiles : files
   console.log(filesToStage.join('\n'))
   console.log('')
@@ -46,13 +70,20 @@ export async function mainController() {
     ? await getStoredApiKey(config.model.provider)
     : null
 
-  let finalCommitMessage = await promptForCommitMessageInput(
-    config.model && apiKey
-      ? { name: config.model.name, hasKey: true }
-      : config.model
-        ? { name: config.model.name, hasKey: false }
-        : undefined
-  )
+  if (finalCommitMessage.length > 0) {
+    console.log(chalk.yellow.dim(' Using provided commit message'))
+    console.log(chalk.magenta.dim(finalCommitMessage))
+  }
+
+  if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
+    finalCommitMessage = await promptForCommitMessageInput(
+      config.model && apiKey
+        ? { name: config.model.name, hasKey: true }
+        : config.model
+          ? { name: config.model.name, hasKey: false }
+          : undefined
+    )
+  }
 
   if (finalCommitMessage.length === 0) {
     if (!config.model || !apiKey) {
@@ -62,6 +93,10 @@ export async function mainController() {
     }
 
     while (true) {
+      if (forceLLMGenerate) {
+        console.log(chalk.yellow.dim(' Using LLM to generate message'))
+      }
+
       const llmResult = await runWithLoading('Generating commit message', () =>
         generateCommitMessage(repoRoot, config, {
           ...config.model!,
@@ -76,7 +111,7 @@ export async function mainController() {
 
       console.log(chalk.magenta.dim(finalCommitMessage))
 
-      if (config.autoAcceptCommitMessage) {
+      if (forceLLMGenerate || config.autoAcceptCommitMessage) {
         break
       }
 
@@ -101,7 +136,7 @@ export async function mainController() {
     return
   }
 
-  if (config.autoRunPostCommand) {
+  if (forceExecPostCommand || config.autoRunPostCommand) {
     console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)

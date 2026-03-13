@@ -43,7 +43,7 @@ export async function promptForGeneratedCommitAction() {
 
 export async function promptForFilesToStage(files: string[]) {
   return checkbox({
-    message: `Select files ${chalk.reset.dim('(⏎ submit)')}`,
+    message: `Select files to stage ${chalk.reset.dim('(⏎ submit)')}`,
     choices: files.map((file) => ({
       name: file,
       value: file,
