@@ -97,6 +97,10 @@ export async function mainController() {
   await commitChanges(finalCommitMessage, repoRoot)
   console.log('')
 
+  if (!config.postCommand) {
+    return
+  }
+
   if (config.autoRunPostCommand) {
     console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
   } else {

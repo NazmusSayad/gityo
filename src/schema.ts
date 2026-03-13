@@ -18,8 +18,8 @@ export const configSchema = z
       reasoning: z.union([z.boolean(), z.string().min(1)]).default(false),
     }),
 
-    autoAcceptCommitMessage: z.boolean(),
-    customInstructions: z.string().min(1),
+    autoAcceptMessage: z.boolean(),
+    instructions: z.string().min(1),
 
     postCommand: z.enum(['push', 'push-and-pull']),
     autoRunPostCommand: z.boolean(),
@@ -32,10 +32,10 @@ export function resolveConfig(input: unknown) {
   return {
     model: parsed.model,
 
-    customInstructions: parsed.customInstructions,
-    autoAcceptCommitMessage: parsed.autoAcceptCommitMessage ?? false,
+    instructions: parsed.instructions,
+    autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,
 
-    postCommand: parsed.postCommand ?? 'push',
+    postCommand: parsed.postCommand,
     autoRunPostCommand: parsed.autoRunPostCommand ?? false,
   }
 }

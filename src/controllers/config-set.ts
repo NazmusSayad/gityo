@@ -45,7 +45,7 @@ export async function setConfigController(
       : ((await readGlobalConfig()) ?? {})
 
   if (key === 'autoAcceptCommitMessage') {
-    config.autoAcceptCommitMessage = parseBoolean(rawValue)
+    config.autoAcceptMessage = parseBoolean(rawValue)
   }
 
   if (key === 'autoRunPostCommand') {
@@ -65,7 +65,7 @@ export async function setConfigController(
       throw new Error('customInstructions cannot be empty.')
     }
 
-    config.customInstructions = rawValue
+    config.instructions = rawValue
   }
 
   if (target === 'local') {

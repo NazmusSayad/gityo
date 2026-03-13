@@ -38,7 +38,7 @@ export async function generateCommitMessage(
       {
         role: 'user',
         content:
-          config.customInstructions ||
+          config.instructions ||
           'Generate a concise git commit message based on the above instructions and diff.',
       },
     ],

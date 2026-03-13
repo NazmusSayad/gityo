@@ -18,8 +18,8 @@ export async function loadConfig(cwd = process.cwd()) {
     ...(projectConfig ?? {}),
     customInstructions:
       projectInstructions ??
-      projectConfig?.customInstructions ??
-      globalConfig?.customInstructions,
+      projectConfig?.instructions ??
+      globalConfig?.instructions,
   })
 }
 

@@ -21,7 +21,6 @@
     "keytar": "^7.9.0"
   },
   "devDependencies": {
-    "pretty-ms": "^9.3.0",
     "@ai-sdk/anthropic": "^3.0.58",
     "@ai-sdk/google": "^3.0.43",
     "@ai-sdk/openai": "^3.0.41",
@@ -29,6 +28,7 @@
     "@eslint/compat": "^1.4.0",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.38.0",
+    "@inquirer/core": "^11.1.5",
     "@inquirer/prompts": "^8.3.0",
     "@types/node": "^24.9.1",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
@@ -46,6 +46,7 @@
     "noarg": "^3.1.9",
     "prettier": "^3.6.2",
     "prettier-plugin-organize-imports": "^4.3.0",
+    "pretty-ms": "^9.3.0",
     "rolldown": "1.0.0-rc.9",
     "tsdown": "^0.15.9",
     "tslib": "^2.8.1",
