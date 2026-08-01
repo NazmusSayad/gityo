@@ -1,30 +1,16 @@
-import type { OpenAICompatibleProviderOptions } from '@ai-sdk/openai-compatible'
 import { generateText } from 'ai'
-import { SUPPORTED_PROVIDERS, type ResolvedConfig } from '../../schema'
+import type { ResolvedConfig } from '../../schema'
 import { getStagedDiff } from '../git'
-import { resolveAiProvider } from './resolve-provider'
+import { resolveAiModel, type ResolveAiModelConfig } from './resolve-ai-model'
 import systemPrompt from './system-prompt.txt?raw'
 
 export async function generateCommitMessage(
   cwd: string,
   config: ResolvedConfig,
-  model: {
-    provider: string
-    name: string
-    key: string
-
-    reasoning?: boolean | string
-  }
+  model: ResolveAiModelConfig
 ) {
-  const provider = resolveAiProvider(model.provider, model.key)
-  if (!provider) {
-    throw new Error(
-      `Unsupported model provider '${provider}'. Use ${SUPPORTED_PROVIDERS.join(', ')} or an https base URL.`
-    )
-  }
-
   const result = await generateText({
-    model: provider(model.name),
+    model: resolveAiModel(model),
 
     messages: [
       {
@@ -42,13 +28,6 @@ export async function generateCommitMessage(
           'Generate a concise git commit message based on the above instructions and diff.',
       },
     ],
-
-    providerOptions: {
-      openai: {
-        reasoningEffort:
-          model.reasoning === true ? 'medium' : model.reasoning || undefined,
-      } satisfies OpenAICompatibleProviderOptions,
-    },
   })
 
   return {

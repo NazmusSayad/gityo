@@ -89,7 +89,7 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
     finalCommitMessage = await promptForCommitMessageInput({
-      name: model.name,
+      model: model.model,
       hasKey: apiKey !== null,
     })
   }
@@ -108,8 +108,11 @@ export async function mainController(options: MainControllerOptions = {}) {
 
       const llmResult = await runWithLoading('Generating commit message', () =>
         generateCommitMessage(repoRoot, config, {
-          ...model,
-          key: apiKey,
+          npm: model.npm,
+          apiKey,
+          model: model.model,
+          apiUrl: model.apiUrl,
+          options: model.options,
         })
       )
 

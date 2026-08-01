@@ -59,23 +59,41 @@ A configured model is required — gityo won't run without one. Models live in a
   "$schema": "https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json",
   "models": {
     "default": {
-      "provider": "openrouter",
-      "name": "deepseek/deepseek-chat",
-      "apiKeyEnv": "OPENROUTER_API_KEY"
+      "npm": "@openrouter/ai-sdk-provider",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "model": "deepseek/deepseek-chat"
     },
     "fast": {
-      "provider": "openai",
-      "name": "gpt-4.1-mini",
-      "apiKeyEnv": "OPENAI_API_KEY"
+      "npm": "@ai-sdk/openai",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "model": "gpt-4.1-mini"
     }
   }
 }
 ```
 
-`apiKeyEnv` accepts a single variable name or an array of names, tried in order:
+Each model config:
+
+- `npm` — the provider package, one of 30 supported AI SDK providers (autocompleted by the schema). Optional; defaults to `@ai-sdk/openai-compatible`
+- `apiKeyEnv` — environment variable(s) holding the API key, tried in order
+- `model` — the model ID
+- `apiUrl` — optional base URL (required when `npm` is `@ai-sdk/openai-compatible`)
+- `options` — extra provider options passed to the provider factory
+
+`apiKeyEnv` accepts a single variable name or an array of names:
 
 ```json
 "apiKeyEnv": ["GITYO_API_KEY", "OPENROUTER_API_KEY"]
+```
+
+OpenAI-compatible example without `npm`:
+
+```json
+"local": {
+  "apiKeyEnv": "MY_API_KEY",
+  "model": "my-model",
+  "apiUrl": "https://my-endpoint.example.com/v1"
+}
 ```
 
 Then use:
@@ -85,7 +103,7 @@ gityo --generate
 gityo --model fast --generate
 ```
 
-Supported providers include OpenAI, Anthropic, Google, OpenRouter, and compatible custom endpoints (a URL as `provider`).
+Providers are the official Vercel AI SDK packages: `@ai-sdk/openai`, `@ai-sdk/openai-compatible`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/azure`, `@ai-sdk/amazon-bedrock`, `@ai-sdk/groq`, `@ai-sdk/mistral`, `@ai-sdk/deepseek`, `@ai-sdk/togetherai`, `@ai-sdk/fireworks`, `@ai-sdk/perplexity`, `@ai-sdk/cohere`, `@ai-sdk/cerebras`, `@ai-sdk/luma`, `@ai-sdk/fal`, `@ai-sdk/deepinfra`, `@ai-sdk/google-vertex`, `@openrouter/ai-sdk-provider`, plus `ai-sdk-ollama`, `ollama-ai-provider-v2`, `workers-ai-provider`, `zhipu-ai-provider`, `sambanova-ai-provider`, `vercel-minimax-ai-provider`, `@aihubmix/ai-sdk-provider`, `ai-gateway-provider`, `@friendliai/ai-provider`, `@helicone/ai-sdk-provider`, and `ai-sdk-provider-opencode-sdk`.
 
 ## Config
 
@@ -128,9 +146,9 @@ Example:
   "$schema": "https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json",
   "models": {
     "default": {
-      "provider": "openai",
-      "name": "gpt-4.1",
-      "apiKeyEnv": "OPENAI_API_KEY"
+      "npm": "@ai-sdk/openai",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "model": "gpt-4.1"
     }
   },
   "autoAcceptMessage": false,

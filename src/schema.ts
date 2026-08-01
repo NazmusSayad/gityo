@@ -1,20 +1,16 @@
 import { z } from 'zod'
-
-const BUILTIN_PROVIDERS = ['openai', 'anthropic', 'google'] as const
-const COMPATIBLE_PROVIDERS = ['openrouter', 'kilo'] as const
-export const SUPPORTED_PROVIDERS = [
-  ...BUILTIN_PROVIDERS,
-  ...COMPATIBLE_PROVIDERS,
-] as const
+import { PROVIDER_NPM_PACKAGES } from './lib/llm/providers'
 
 const modelSchema = z.object({
-  provider: z.union([...SUPPORTED_PROVIDERS.map((p) => z.literal(p)), z.url()]),
-
-  name: z.string().min(1),
-
-  reasoning: z.union([z.boolean(), z.string().min(1)]).default(false),
+  npm: z.enum(PROVIDER_NPM_PACKAGES).default('@ai-sdk/openai-compatible'),
 
   apiKeyEnv: z.union([z.string().min(1), z.array(z.string().min(1))]),
+
+  model: z.string().min(1),
+
+  apiUrl: z.url().optional(),
+
+  options: z.record(z.string(), z.unknown()).optional(),
 })
 
 export const configSchema = z
