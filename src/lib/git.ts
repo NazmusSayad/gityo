@@ -73,7 +73,7 @@ export async function runPostCommand(
   await git.push()
 
   if (postCommand === 'push-and-pull') {
-    await git.pull(['--rebase'])
+    await git.pull()
   }
 }
 
