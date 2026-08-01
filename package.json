@@ -16,8 +16,7 @@
     "gityo": "./dist/index.js"
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^15.0.0",
-    "keytar": "^7.9.0"
+    "@commander-js/extra-typings": "^15.0.0"
   },
   "devDependencies": {
     "@ai-sdk/anthropic": "^3.0.58",

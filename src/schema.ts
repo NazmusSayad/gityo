@@ -7,20 +7,21 @@ export const SUPPORTED_PROVIDERS = [
   ...COMPATIBLE_PROVIDERS,
 ] as const
 
+const modelSchema = z.object({
+  provider: z.union([...SUPPORTED_PROVIDERS.map((p) => z.literal(p)), z.url()]),
+
+  name: z.string().min(1),
+
+  reasoning: z.union([z.boolean(), z.string().min(1)]).default(false),
+
+  apiKeyEnv: z.union([z.string().min(1), z.array(z.string().min(1))]),
+})
+
 export const configSchema = z
   .object({
     $schema: z.url(),
 
-    model: z.object({
-      provider: z.union([
-        ...SUPPORTED_PROVIDERS.map((p) => z.literal(p)),
-        z.url(),
-      ]),
-
-      name: z.string().min(1),
-
-      reasoning: z.union([z.boolean(), z.string().min(1)]).default(false),
-    }),
+    models: z.record(z.string().min(1), modelSchema),
 
     autoAcceptMessage: z.boolean(),
     instructions: z.string().min(1),
@@ -34,7 +35,7 @@ export function resolveConfig(input: unknown) {
   const parsed = configSchema.parse(input)
 
   return {
-    model: parsed.model,
+    models: parsed.models,
 
     instructions: parsed.instructions,
     autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,

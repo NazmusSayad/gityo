@@ -45,37 +45,57 @@ Typical flow:
 gityo
 gityo --stage
 gityo --generate
+gityo --model fast --generate
 gityo --message "fix login redirect bug"
 gityo --yolo
 ```
 
 ## AI setup
 
-If you want AI-generated commit messages, set a model once and reuse it:
+A configured model is required — gityo won't run without one. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
 
-```bash
-gityo config set model openai gpt-4.1 YOUR_API_KEY
+```json
+{
+  "$schema": "https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json",
+  "models": {
+    "default": {
+      "provider": "openrouter",
+      "name": "deepseek/deepseek-chat",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    "fast": {
+      "provider": "openai",
+      "name": "gpt-4.1-mini",
+      "apiKeyEnv": "OPENAI_API_KEY"
+    }
+  }
+}
+```
+
+`apiKeyEnv` accepts a single variable name or an array of names, tried in order:
+
+```json
+"apiKeyEnv": ["GITYO_API_KEY", "OPENROUTER_API_KEY"]
 ```
 
 Then use:
 
 ```bash
 gityo --generate
+gityo --model fast --generate
 ```
 
-Supported providers include OpenAI, Anthropic, Google, OpenRouter, and compatible custom endpoints.
+Supported providers include OpenAI, Anthropic, Google, OpenRouter, and compatible custom endpoints (a URL as `provider`).
 
 ## Config
 
-View your current config:
+Show where your config files live:
 
 ```bash
 gityo config
 ```
 
-You can also write config manually.
-
-Project config goes in:
+Config is edited by hand in a JSON file. Project config goes in:
 
 ```text
 .gityo.config.json
@@ -95,7 +115,7 @@ You can also add repo-specific writing instructions in:
 
 That file is useful when you want commit messages in a certain tone or format for one project.
 
-If you want editor autocomplete and validation, use this schema:
+Set `$schema` in your config file for editor autocomplete and validation:
 
 ```text
 https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json
@@ -106,9 +126,12 @@ Example:
 ```json
 {
   "$schema": "https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json",
-  "model": {
-    "provider": "openai",
-    "name": "gpt-4.1"
+  "models": {
+    "default": {
+      "provider": "openai",
+      "name": "gpt-4.1",
+      "apiKeyEnv": "OPENAI_API_KEY"
+    }
   },
   "autoAcceptMessage": false,
   "postCommand": "push",
@@ -130,14 +153,6 @@ Priority is simple:
 - `.gityo.md` for repo-specific instructions
 - `.gityo.config.json` for project config
 - `~/.config/gityo.json` for your defaults
-
-A few useful examples:
-
-```bash
-gityo config set postCommand push
-gityo config set autoRunPostCommand true
-gityo config set autoAcceptCommitMessage true
-```
 
 ## Good for
 

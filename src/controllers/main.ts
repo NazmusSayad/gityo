@@ -16,12 +16,13 @@ import {
   promptForGeneratedCommitAction,
   promptForPostCommand,
 } from '../lib/prompts'
+import { resolveApiKey } from '../lib/resolve-api-key'
 import { runWithLoading } from '../lib/run-with-loading'
-import { getStoredApiKey } from '../lib/secrets'
 
 type MainControllerOptions = {
   generate?: boolean
   message?: string
+  model?: string
   post?: boolean
   stage?: boolean
   yolo?: boolean
@@ -33,6 +34,19 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   const repoRoot = await getRepositoryRoot(cwd)
   const config = await loadConfig(repoRoot)
+
+  const modelKey = options.model ?? 'default'
+  const model = config.models?.[modelKey]
+
+  if (!model) {
+    const availableModels = Object.keys(config.models ?? {}).join(', ')
+    const hint =
+      availableModels.length === 0
+        ? 'No models configured. Edit your config file to add a model — run `gityo config` to see where.'
+        : `Model '${modelKey}' is not configured. Available models: ${availableModels}.`
+
+    throw new Error(hint)
+  }
 
   const forceStageEnabled = options.stage || options.yolo
   const forceLLMGenerate = options.generate || options.yolo
@@ -66,9 +80,7 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   await stageFiles(filesToStage, repoRoot)
 
-  const apiKey = config.model
-    ? await getStoredApiKey(config.model.provider)
-    : null
+  const apiKey = resolveApiKey(model.apiKeyEnv)
 
   if (finalCommitMessage.length > 0) {
     console.log(chalk.yellow.dim(' Using provided commit message'))
@@ -76,19 +88,16 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
-    finalCommitMessage = await promptForCommitMessageInput(
-      config.model && apiKey
-        ? { name: config.model.name, hasKey: true }
-        : config.model
-          ? { name: config.model.name, hasKey: false }
-          : undefined
-    )
+    finalCommitMessage = await promptForCommitMessageInput({
+      name: model.name,
+      hasKey: apiKey !== null,
+    })
   }
 
   if (finalCommitMessage.length === 0) {
-    if (!config.model || !apiKey) {
+    if (!apiKey) {
       throw new Error(
-        'No commit message provided and no model configured for generation.'
+        `No API key found. Set 'apiKeyEnv' for the '${modelKey}' model in your config to the environment variable holding the key.`
       )
     }
 
@@ -99,7 +108,7 @@ export async function mainController(options: MainControllerOptions = {}) {
 
       const llmResult = await runWithLoading('Generating commit message', () =>
         generateCommitMessage(repoRoot, config, {
-          ...config.model!,
+          ...model,
           key: apiKey,
         })
       )

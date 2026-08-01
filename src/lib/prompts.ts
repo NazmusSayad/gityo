@@ -1,4 +1,4 @@
-import { checkbox, confirm, input, password, select } from '@inquirer/prompts'
+import { checkbox, confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
 import { customInput } from './custom-input'
 
@@ -59,13 +59,13 @@ export async function promptForFilesToStage(files: string[]) {
   })
 }
 
-export async function promptForCommitMessageInput(model?: {
+export async function promptForCommitMessageInput(model: {
   hasKey: boolean
   name: string
 }) {
   const message = await customInput({
-    required: !model?.hasKey,
-    message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.name}` : ''})`)}`,
+    required: !model.hasKey,
+    message: `Commit message ${chalk.reset.dim(`(⏎ submit • ${model.name})`)}`,
   })
 
   return message.trim()
@@ -76,61 +76,5 @@ export async function promptForPostCommand(commandLabel: string) {
     message: `Run post command: ${commandLabel}?`,
     default: true,
     theme: selectionTheme,
-  })
-}
-
-export async function promptForProviderSelection(providers: string[]) {
-  const customProviderValue = '__custom__'
-  const selected = await select({
-    message: 'Choose a provider or custom base URL',
-    theme: selectionTheme,
-    choices: [
-      ...providers.map((provider) => ({
-        name: provider,
-        value: provider,
-      })),
-      {
-        name: 'Custom base URL',
-        value: customProviderValue,
-      },
-    ],
-  })
-
-  if (selected !== customProviderValue) {
-    return selected
-  }
-
-  const baseUrl = await input({
-    message: 'Custom base URL',
-    validate: (value) => {
-      try {
-        const url = new URL(value)
-
-        return url.protocol === 'https:'
-          ? true
-          : 'Custom base URLs must use https.'
-      } catch {
-        return 'Enter a valid https URL.'
-      }
-    },
-  })
-
-  return baseUrl.trim()
-}
-
-export async function promptForModelName() {
-  return input({
-    message: 'Model name',
-    validate: (value) =>
-      value.trim().length > 0 ? true : 'Model name cannot be empty.',
-  })
-}
-
-export async function promptForApiKey(provider: string) {
-  return password({
-    message: `API key for ${provider}`,
-    mask: '*',
-    validate: (value) =>
-      value.trim().length > 0 ? true : 'API key cannot be empty.',
   })
 }
