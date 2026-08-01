@@ -1,68 +1,49 @@
-import { execa } from 'execa'
+import { simpleGit } from 'simple-git'
 import type { ResolvedConfig } from '../schema'
 
 export async function ensureInsideGitRepo(cwd = process.cwd()) {
-  const result = await execa('git', ['rev-parse', '--is-inside-work-tree'], {
-    cwd,
-    reject: false,
-  })
-
-  if (result.exitCode !== 0 || result.stdout.trim() !== 'true') {
+  if (!(await createGit(cwd).checkIsRepo())) {
     throw new Error('gityo must be run inside a git repository.')
   }
 }
 
 export async function getRepositoryRoot(cwd = process.cwd()) {
-  const result = await execa('git', ['rev-parse', '--show-toplevel'], {
-    cwd,
-    reject: false,
-  })
-
-  if (result.exitCode !== 0) {
+  try {
+    return (await createGit(cwd).revparse(['--show-toplevel'])).trim()
+  } catch (error) {
     throw new Error(
-      result.stderr.trim() || 'Failed to resolve git repository root.'
+      error instanceof Error
+        ? error.message.trim() || 'Failed to resolve git repository root.'
+        : 'Failed to resolve git repository root.'
     )
   }
-
-  return result.stdout.trim()
 }
 
 export async function getCurrentBranch(cwd = process.cwd()) {
-  const result = await execa(
-    'git',
-    ['symbolic-ref', '--quiet', '--short', 'HEAD'],
-    {
-      cwd,
-      reject: false,
-    }
-  )
+  const summary = await createGit(cwd).branch()
 
-  if (result.exitCode === 0) {
-    return result.stdout.trim()
-  }
-
-  if (result.exitCode === 1) {
-    return '(detached HEAD)'
-  }
-
-  throw new Error(result.stderr.trim() || 'Git command failed.')
+  return summary.detached ? '(detached HEAD)' : summary.current
 }
 
 export async function getChangedFiles(cwd = process.cwd()) {
-  const [unstagedResult, stagedResult, untrackedResult] = await Promise.all([
-    runGit(['diff', '--name-only', '--diff-filter=ACDMRTUXB', '-z'], cwd),
-    runGit(
-      ['diff', '--cached', '--name-only', '--diff-filter=ACDMRTUXB', '-z'],
-      cwd
-    ),
-    runGit(['ls-files', '--others', '--exclude-standard', '-z'], cwd),
+  const git = createGit(cwd)
+  const [unstaged, staged, untracked] = await Promise.all([
+    git.raw(['diff', '--name-only', '--diff-filter=ACDMRTUXB', '-z']),
+    git.raw([
+      'diff',
+      '--cached',
+      '--name-only',
+      '--diff-filter=ACDMRTUXB',
+      '-z',
+    ]),
+    git.raw(['ls-files', '--others', '--exclude-standard', '-z']),
   ])
 
   return Array.from(
     new Set([
-      ...unstagedResult.stdout.split('\0').filter(Boolean),
-      ...stagedResult.stdout.split('\0').filter(Boolean),
-      ...untrackedResult.stdout.split('\0').filter(Boolean),
+      ...splitNull(staged),
+      ...splitNull(unstaged),
+      ...splitNull(untracked),
     ])
   ).sort((left, right) => left.localeCompare(right))
 }
@@ -72,46 +53,43 @@ export async function stageFiles(files: string[], cwd = process.cwd()) {
     return
   }
 
-  await runGit(['add', '--', ...files], cwd)
+  await createGit(cwd).add(files)
 }
 
 export async function getStagedDiff(cwd = process.cwd()) {
-  return (await runGit(['diff', '--cached', '--no-ext-diff'], cwd)).stdout
+  return createGit(cwd).raw(['diff', '--cached', '--no-ext-diff'])
 }
 
 export async function commitChanges(message: string, cwd = process.cwd()) {
-  await execa('git', ['commit', '-m', message], {
-    cwd,
-    stdio: 'inherit',
-  })
+  await createGit(cwd, true).commit(message)
 }
 
 export async function runPostCommand(
   postCommand: ResolvedConfig['postCommand'],
   cwd = process.cwd()
 ) {
-  await execa('git', ['push'], {
-    cwd,
-    stdio: 'inherit',
-  })
+  const git = createGit(cwd, true)
+
+  await git.push()
 
   if (postCommand === 'push-and-pull') {
-    await execa('git', ['pull', '--rebase'], {
-      cwd,
-      stdio: 'inherit',
-    })
+    await git.pull(['--rebase'])
   }
 }
 
-async function runGit(args: string[], cwd: string) {
-  const result = await execa('git', args, {
-    cwd,
-    reject: false,
-  })
+function splitNull(output: string) {
+  return output.split('\0').filter(Boolean)
+}
 
-  if (result.exitCode !== 0) {
-    throw new Error(result.stderr.trim() || 'Git command failed.')
+function createGit(cwd: string, live = false) {
+  const git = simpleGit({ baseDir: cwd })
+
+  if (live) {
+    git.outputHandler((_, stdout, stderr) => {
+      stdout.pipe(process.stdout)
+      stderr.pipe(process.stderr)
+    })
   }
 
-  return result
+  return git
 }
