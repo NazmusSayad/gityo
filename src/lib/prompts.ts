@@ -53,21 +53,26 @@ const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
 
 export async function acceptGeneratedCommitMessage() {
   const value = await input({
-    message: `${'Accept generated commit message?'} ${chalk.reset.dim('[Y/n]')}`,
+    message: `${'Accept generated commit message?'} ${chalk.reset.dim('[Y/r]')}`,
     theme: selectionTheme,
+    validate: (v) => {
+      const normalized = v.trim().toLowerCase()
+
+      if (normalized === '' || normalized === 'y' || normalized === 'r') {
+        return true
+      }
+
+      return 'Press Enter for yes, or type r to generate a new commit message.'
+    },
   })
 
   const normalized = value.trim().toLowerCase()
 
-  if (normalized === '' || normalized === 'enter' || normalized === 'y') {
+  if (normalized === '' || normalized === 'y') {
     return true
   }
 
-  if (normalized === 'n') {
-    return false
-  }
-
-  return undefined
+  return false
 }
 
 export async function promptForCommitMessageInput(model: string) {
