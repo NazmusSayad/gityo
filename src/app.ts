@@ -8,7 +8,10 @@ export const app = new Command()
   .description(
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.'
   )
-  .option('-g, --generate', 'Generate a commit message without asking.')
+  .option(
+    '-g, --generate',
+    'Generate a commit message and commit without asking.'
+  )
   .option(
     '-m, --message <message>',
     'Use the provided message as the commit message.'

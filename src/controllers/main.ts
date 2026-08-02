@@ -70,11 +70,17 @@ export async function mainController(options: MainControllerOptions = {}) {
         console.log(chalk.yellow('• Using LLM to generate message'))
       }
 
-      const llmResult = await runWithLoading('Generating commit message', () =>
-        generateCommitMessage(languageModel, config.instructions ?? null, diff)
+      const commitMessage = await runWithLoading(
+        'Generating commit message',
+        () =>
+          generateCommitMessage(
+            languageModel,
+            config.instructions ?? null,
+            diff
+          )
       )
 
-      finalCommitMessage = llmResult.text.trim()
+      finalCommitMessage = commitMessage.trim()
       if (finalCommitMessage.length === 0) {
         throw new Error('The selected model returned an empty commit message.')
       }
@@ -97,7 +103,6 @@ export async function mainController(options: MainControllerOptions = {}) {
     throw new Error('Commit message cannot be empty.')
   }
 
-  console.log('')
   console.log(chalk.green('✓ Committing changes'))
   if (!hasStaged) {
     await git.add(['-A'])

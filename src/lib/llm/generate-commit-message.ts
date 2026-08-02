@@ -24,7 +24,5 @@ export async function generateCommitMessage(
     ],
   })
 
-  return {
-    text: result.text.trim(),
-  }
+  return result.text.trim()
 }
