@@ -64,6 +64,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (finalCommitMessage.length > 0) {
     console.log(chalk.yellow.dim('✓ Using provided commit message'))
     console.log(chalk.magenta.dim(finalCommitMessage))
+    console.log('')
   }
 
   if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
@@ -86,6 +87,7 @@ export async function mainController(options: MainControllerOptions = {}) {
       }
 
       console.log(chalk.magenta.dim(finalCommitMessage))
+      console.log('')
 
       if (forceLLMGenerate || config.autoAcceptCommitMessage) {
         break
