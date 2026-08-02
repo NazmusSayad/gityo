@@ -1,11 +1,11 @@
-import { checkbox, confirm, input, password, select } from '@inquirer/prompts'
+import { createPrompt, isEnterKey, useKeypress, useState } from '@inquirer/core'
+import { confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
-import { customInput } from './custom-input'
 
 const selectionTheme = {
   prefix: {
     idle: chalk.blue('?'),
-    done: chalk.green(''),
+    done: chalk.green('✓'),
   },
 
   style: {
@@ -13,6 +13,48 @@ const selectionTheme = {
       status === 'done' ? chalk.green(txt) : chalk.blue(txt),
   },
 }
+
+type CommitMessageInputConfig = {
+  message: string
+  required?: boolean
+}
+
+const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
+  (config, done) => {
+    const [status, setStatus] = useState<'idle' | 'done'>('idle')
+    const [value, setValue] = useState('')
+    const inputPrefix = chalk.dim('❯ ')
+
+    useKeypress((key, readline) => {
+      if (!isEnterKey(key)) {
+        setValue(readline.line)
+        return
+      }
+
+      const answer = value
+
+      if (config.required && answer.trim().length === 0) {
+        return
+      }
+
+      setStatus('done')
+      setValue(answer)
+      done(answer)
+    })
+
+    const prefix = status === 'done' ? chalk.green('✓') : chalk.blue('?')
+    const messageColor = status === 'done' ? chalk.green : chalk.blue
+    const header = `${prefix} ${messageColor(config.message)}`
+
+    if (status === 'done') {
+      return value.length === 0
+        ? header
+        : `${header}\n${chalk.magenta.dim(value)}`
+    }
+
+    return `${header}\n${inputPrefix}${value}`
+  }
+)
 
 export async function promptForGeneratedCommitAction() {
   function mapResponse(value: string) {
@@ -41,31 +83,10 @@ export async function promptForGeneratedCommitAction() {
   )
 }
 
-export async function promptForFilesToStage(files: string[]) {
-  return checkbox({
-    message: `Select files to stage ${chalk.reset.dim('(⏎ submit)')}`,
-    choices: files.map((file) => ({
-      name: file,
-      value: file,
-    })),
-    pageSize: 12,
-    theme: {
-      ...selectionTheme,
-      style: {
-        ...selectionTheme.style,
-        answer: () => '',
-      },
-    },
-  })
-}
-
-export async function promptForCommitMessageInput(model?: {
-  hasKey: boolean
-  name: string
-}) {
-  const message = await customInput({
-    required: !model?.hasKey,
-    message: `Commit message ${chalk.reset.dim(`(⏎ submit${model ? ` • ${model.name}` : ''})`)}`,
+export async function promptForCommitMessageInput(model: string) {
+  const message = await commitMessageInputPrompt({
+    required: false,
+    message: `Commit message ${chalk.reset.dim(`(⏎ submit • ${model})`)}`,
   })
 
   return message.trim()
@@ -76,61 +97,5 @@ export async function promptForPostCommand(commandLabel: string) {
     message: `Run post command: ${commandLabel}?`,
     default: true,
     theme: selectionTheme,
-  })
-}
-
-export async function promptForProviderSelection(providers: string[]) {
-  const customProviderValue = '__custom__'
-  const selected = await select({
-    message: 'Choose a provider or custom base URL',
-    theme: selectionTheme,
-    choices: [
-      ...providers.map((provider) => ({
-        name: provider,
-        value: provider,
-      })),
-      {
-        name: 'Custom base URL',
-        value: customProviderValue,
-      },
-    ],
-  })
-
-  if (selected !== customProviderValue) {
-    return selected
-  }
-
-  const baseUrl = await input({
-    message: 'Custom base URL',
-    validate: (value) => {
-      try {
-        const url = new URL(value)
-
-        return url.protocol === 'https:'
-          ? true
-          : 'Custom base URLs must use https.'
-      } catch {
-        return 'Enter a valid https URL.'
-      }
-    },
-  })
-
-  return baseUrl.trim()
-}
-
-export async function promptForModelName() {
-  return input({
-    message: 'Model name',
-    validate: (value) =>
-      value.trim().length > 0 ? true : 'Model name cannot be empty.',
-  })
-}
-
-export async function promptForApiKey(provider: string) {
-  return password({
-    message: `API key for ${provider}`,
-    mask: '*',
-    validate: (value) =>
-      value.trim().length > 0 ? true : 'API key cannot be empty.',
   })
 }

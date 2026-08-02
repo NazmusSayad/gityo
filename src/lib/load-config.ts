@@ -1,10 +1,14 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { configSchema, resolveConfig } from '../schema'
 
-const PROJECT_CONFIG_FILE_NAME = '.gityo.config.json'
-const GLOBAL_CONFIG_FILE_PATH = path.join(os.homedir(), '.config', 'gityo.json')
+export const PROJECT_CONFIG_FILE_NAME = '.gityo.config.json'
+export const GLOBAL_CONFIG_FILE_PATH = path.join(
+  os.homedir(),
+  '.config',
+  'gityo.json'
+)
 
 export async function loadConfig(cwd = process.cwd()) {
   const [globalConfig, projectConfig, projectInstructions] = await Promise.all([
@@ -16,44 +20,19 @@ export async function loadConfig(cwd = process.cwd()) {
   return resolveConfig({
     ...(globalConfig ?? {}),
     ...(projectConfig ?? {}),
-    customInstructions:
+    instructions:
       projectInstructions ??
       projectConfig?.instructions ??
       globalConfig?.instructions,
   })
 }
 
-export async function readProjectConfig(cwd = process.cwd()) {
+async function readProjectConfig(cwd = process.cwd()) {
   return readConfigFile(path.join(cwd, PROJECT_CONFIG_FILE_NAME))
 }
 
-export async function readGlobalConfig() {
+async function readGlobalConfig() {
   return readConfigFile(GLOBAL_CONFIG_FILE_PATH)
-}
-
-export async function writeProjectConfig(cwd = process.cwd(), config: unknown) {
-  const configPath = path.join(cwd, PROJECT_CONFIG_FILE_NAME)
-  await writeConfigFile(configPath, config)
-}
-
-export async function writeGlobalConfig(config: unknown) {
-  await writeConfigFile(GLOBAL_CONFIG_FILE_PATH, config)
-}
-
-async function writeConfigFile(configPath: string, config: unknown) {
-  const result = configSchema.safeParse(config)
-
-  if (!result.success) {
-    throw new Error(`Invalid config update: ${result.error.message}`)
-  }
-
-  await mkdir(path.dirname(configPath), { recursive: true })
-
-  await writeFile(
-    configPath,
-    `${JSON.stringify(result.data, null, 2)}\n`,
-    'utf8'
-  )
 }
 
 async function readConfigFile(filePath: string) {

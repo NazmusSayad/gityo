@@ -1,26 +1,23 @@
 import { z } from 'zod'
+import { PROVIDER_NPM_PACKAGES } from './lib/llm/providers'
 
-const BUILTIN_PROVIDERS = ['openai', 'anthropic', 'google'] as const
-const COMPATIBLE_PROVIDERS = ['openrouter', 'kilo'] as const
-export const SUPPORTED_PROVIDERS = [
-  ...BUILTIN_PROVIDERS,
-  ...COMPATIBLE_PROVIDERS,
-] as const
+export const modelSchema = z.object({
+  npm: z.enum(PROVIDER_NPM_PACKAGES).default('@ai-sdk/openai-compatible'),
+
+  apiKeyEnv: z.union([z.string().min(1), z.array(z.string().min(1))]),
+
+  model: z.string().min(1),
+
+  apiUrl: z.url().optional(),
+
+  options: z.record(z.string(), z.unknown()).optional(),
+})
 
 export const configSchema = z
   .object({
     $schema: z.url(),
 
-    model: z.object({
-      provider: z.union([
-        ...SUPPORTED_PROVIDERS.map((p) => z.literal(p)),
-        z.url(),
-      ]),
-
-      name: z.string().min(1),
-
-      reasoning: z.union([z.boolean(), z.string().min(1)]).default(false),
-    }),
+    models: z.record(z.string().min(1), modelSchema),
 
     autoAcceptMessage: z.boolean(),
     instructions: z.string().min(1),
@@ -34,7 +31,7 @@ export function resolveConfig(input: unknown) {
   const parsed = configSchema.parse(input)
 
   return {
-    model: parsed.model,
+    models: parsed.models,
 
     instructions: parsed.instructions,
     autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,

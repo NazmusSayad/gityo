@@ -2,4 +2,4 @@
 
 import { app } from './app'
 
-app.start()
+void app.parseAsync(process.argv)
