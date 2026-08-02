@@ -49,15 +49,8 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   const files = await getChangedFiles(git)
   if (files.length === 0) {
-    console.log('No changed files found.')
-    return
+    return console.log('No changed files found.')
   }
-
-  const branchSummary = await git.branch()
-  const branch = branchSummary.detached
-    ? '(detached HEAD)'
-    : branchSummary.current
-  console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}`)
 
   const { diff, hasStaged } = await getCommitDiff(git)
 
