@@ -61,12 +61,12 @@ A configured model is required — gityo won't run without one, and the API key 
     "default": {
       "npm": "@openrouter/ai-sdk-provider",
       "apiKeyEnv": "OPENROUTER_API_KEY",
-      "model": "deepseek/deepseek-chat"
+      "model": "openai/gpt-oss-120b:nitro"
     },
     "fast": {
       "npm": "@ai-sdk/openai",
       "apiKeyEnv": "OPENAI_API_KEY",
-      "model": "gpt-4.1-mini"
+      "model": "gpt-5-mini"
     }
   }
 }
@@ -148,7 +148,7 @@ Example:
     "default": {
       "npm": "@ai-sdk/openai",
       "apiKeyEnv": "OPENAI_API_KEY",
-      "model": "gpt-4.1"
+      "model": "gpt-5-nano"
     }
   },
   "autoAcceptMessage": false,
