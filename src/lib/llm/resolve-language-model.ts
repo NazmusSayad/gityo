@@ -26,12 +26,14 @@ export function resolveLanguageModel(
     )
   }
 
-  if (modelConfig.npm === '@ai-sdk/openai-compatible' && !modelConfig.apiUrl) {
+  const npm = modelConfig.npm ?? '@ai-sdk/openai-compatible'
+
+  if (npm === '@ai-sdk/openai-compatible' && !modelConfig.apiUrl) {
     throw new Error('apiUrl is required for openai-compatible provider')
   }
 
-  const provider = SUPPORTED_PROVIDERS[modelConfig.npm]({
-    name: modelConfig.npm,
+  const provider = SUPPORTED_PROVIDERS[npm]({
+    name: npm,
     apiKey,
     baseURL: modelConfig.apiUrl,
     ...modelConfig.options,
