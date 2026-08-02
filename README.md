@@ -1,6 +1,6 @@
 # gityo
 
-`gityo` is a CLI that helps you stage changes, write or generate a commit message, commit, and optionally run a post-commit git action.
+`gityo` is a CLI that writes or generates a commit message for your changes, stages them, creates the commit, and optionally runs a post-commit git action.
 
 It is built for people who want a faster commit flow without turning git into a wall of commands.
 
@@ -18,9 +18,8 @@ npx gityo
 
 ## What it does
 
-- lets you choose which changed files to stage
-- lets you write your own commit message
-- can generate a commit message with AI
+- writes or generates a commit message based on your current git state
+- stages everything when nothing is staged yet
 - creates the commit for you
 - can run a post-commit action like `git push`
 
@@ -34,16 +33,17 @@ gityo
 
 Typical flow:
 
-1. Pick files to stage
-2. Type a commit message or generate one
+1. Write a commit message or generate one (from staged files if any, otherwise all changes)
+2. Stage everything if nothing is staged
 3. Create the commit
 4. Optionally run the configured post-commit action
+
+If you already staged files before running `gityo`, only those are used for the message and committed — your other changes are left alone.
 
 ## Common commands
 
 ```bash
 gityo
-gityo --stage
 gityo --generate
 gityo --model fast --generate
 gityo --message "fix login redirect bug"
@@ -52,7 +52,7 @@ gityo --yolo
 
 ## AI setup
 
-A configured model is required — gityo won't run without one. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
+A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--message`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
 
 ```json
 {
@@ -182,4 +182,6 @@ Priority is simple:
 
 - run it inside a git repo
 - if there are no changed files, it exits early
+- if anything is already staged, the message is generated from staged files only and those are committed as-is
+- if nothing is staged, the message is generated from all changes and everything is staged before committing
 - `--yolo` is the fastest mode and skips the usual prompts
