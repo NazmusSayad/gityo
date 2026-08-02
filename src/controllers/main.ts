@@ -62,6 +62,11 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
     finalCommitMessage = await promptForCommitMessageInput(modelConfig.model)
+    if (finalCommitMessage.length > 0) {
+      console.log(chalk.yellow('✓ Using manual commit message'))
+      console.log(chalk.cyan.dim(finalCommitMessage))
+      console.log('')
+    }
   }
 
   if (finalCommitMessage.length === 0) {
