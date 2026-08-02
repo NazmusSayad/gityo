@@ -98,7 +98,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   console.log('')
-  console.log(chalk.yellow.dim('✓ Committing changes'))
+  console.log(chalk.green('✓ Committing changes'))
   if (!hasStaged) {
     await git.add(['-A'])
   }
