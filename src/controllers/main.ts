@@ -103,14 +103,13 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   console.log('')
+  console.log(chalk.yellow.dim('✓ Committing changes'))
   if (!hasStaged) {
-    console.log(chalk.yellow.dim('✓ Staging all files..'))
     await git.add(['-A'])
   }
 
   console.log(files.join('\n'))
   console.log('')
-  console.log(chalk.yellow.dim('✓ Committing staged changes'))
 
   await liveGit.commit(finalCommitMessage)
   console.log('')
