@@ -106,7 +106,6 @@ export async function mainController(options: MainControllerOptions = {}) {
     throw new Error('Commit message cannot be empty.')
   }
 
-  console.log(chalk.green('✓ Committing changes'))
   if (!hasStaged) {
     await git.add(['-A'])
   }
