@@ -56,7 +56,7 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   if (finalCommitMessage.length > 0) {
     console.log(chalk.yellow.dim('✓ Using provided commit message'))
-    console.log(chalk.magenta.dim(finalCommitMessage))
+    console.log(chalk.cyan.dim(finalCommitMessage))
     console.log('')
   }
 
@@ -79,7 +79,7 @@ export async function mainController(options: MainControllerOptions = {}) {
         throw new Error('The selected model returned an empty commit message.')
       }
 
-      console.log(chalk.magenta.dim(finalCommitMessage))
+      console.log(chalk.cyan.dim(finalCommitMessage))
       console.log('')
 
       if (forceLLMGenerate || config.autoAcceptCommitMessage) {
