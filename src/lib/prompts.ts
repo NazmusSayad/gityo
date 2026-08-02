@@ -1,6 +1,6 @@
+import { createPrompt, isEnterKey, useKeypress, useState } from '@inquirer/core'
 import { checkbox, confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
-import { customInput } from './custom-input'
 
 const selectionTheme = {
   prefix: {
@@ -13,6 +13,48 @@ const selectionTheme = {
       status === 'done' ? chalk.green(txt) : chalk.blue(txt),
   },
 }
+
+type CommitMessageInputConfig = {
+  message: string
+  required?: boolean
+}
+
+const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
+  (config, done) => {
+    const [status, setStatus] = useState<'idle' | 'done'>('idle')
+    const [value, setValue] = useState('')
+    const inputPrefix = chalk.dim('❯ ')
+
+    useKeypress((key, readline) => {
+      if (!isEnterKey(key)) {
+        setValue(readline.line)
+        return
+      }
+
+      const answer = value
+
+      if (config.required && answer.trim().length === 0) {
+        return
+      }
+
+      setStatus('done')
+      setValue(answer)
+      done(answer)
+    })
+
+    const prefix = status === 'done' ? chalk.green('') : chalk.blue('?')
+    const messageColor = status === 'done' ? chalk.green : chalk.blue
+    const header = `${prefix} ${messageColor(config.message)}`
+
+    if (status === 'done') {
+      return value.length === 0
+        ? header
+        : `${header}\n${chalk.magenta.dim(value)}`
+    }
+
+    return `${header}\n${inputPrefix}${value}`
+  }
+)
 
 export async function promptForGeneratedCommitAction() {
   function mapResponse(value: string) {
@@ -59,13 +101,10 @@ export async function promptForFilesToStage(files: string[]) {
   })
 }
 
-export async function promptForCommitMessageInput(model: {
-  hasKey: boolean
-  model: string
-}) {
-  const message = await customInput({
-    required: !model.hasKey,
-    message: `Commit message ${chalk.reset.dim(`(⏎ submit • ${model.model})`)}`,
+export async function promptForCommitMessageInput(model: string) {
+  const message = await commitMessageInputPrompt({
+    required: false,
+    message: `Commit message ${chalk.reset.dim(`(⏎ submit • ${model})`)}`,
   })
 
   return message.trim()

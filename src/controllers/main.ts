@@ -1,14 +1,7 @@
 import chalk from 'chalk'
-import {
-  commitChanges,
-  ensureInsideGitRepo,
-  getChangedFiles,
-  getCurrentBranch,
-  getRepositoryRoot,
-  runPostCommand,
-  stageFiles,
-} from '../lib/git'
+import { getChangedFiles, getGit } from '../lib/git'
 import { generateCommitMessage } from '../lib/llm/generate-commit-message'
+import { resolveLanguageModel } from '../lib/llm/resolve-language-model'
 import { loadConfig } from '../lib/load-config'
 import {
   promptForCommitMessageInput,
@@ -16,7 +9,6 @@ import {
   promptForGeneratedCommitAction,
   promptForPostCommand,
 } from '../lib/prompts'
-import { resolveApiKey } from '../lib/resolve-api-key'
 import { runWithLoading } from '../lib/run-with-loading'
 
 type MainControllerOptions = {
@@ -29,16 +21,15 @@ type MainControllerOptions = {
 }
 
 export async function mainController(options: MainControllerOptions = {}) {
-  const cwd = process.cwd()
-  await ensureInsideGitRepo(cwd)
-
-  const repoRoot = await getRepositoryRoot(cwd)
-  const config = await loadConfig(repoRoot)
+  const { git, liveGit } = await getGit()
+  const config = await loadConfig(
+    (await git.revparse(['--show-toplevel'])).trim()
+  )
 
   const modelKey = options.model ?? 'default'
-  const model = config.models?.[modelKey]
+  const modelConfig = config.models?.[modelKey]
 
-  if (!model) {
+  if (!modelConfig) {
     const availableModels = Object.keys(config.models ?? {}).join(', ')
     const hint =
       availableModels.length === 0
@@ -47,6 +38,8 @@ export async function mainController(options: MainControllerOptions = {}) {
 
     throw new Error(hint)
   }
+
+  const languageModel = resolveLanguageModel(modelConfig)
 
   const forceStageEnabled = options.stage || options.yolo
   const forceLLMGenerate = options.generate || options.yolo
@@ -57,17 +50,20 @@ export async function mainController(options: MainControllerOptions = {}) {
     throw new Error('Provided commit message cannot be empty.')
   }
 
-  const files = await getChangedFiles(repoRoot)
+  const files = await getChangedFiles(git)
   if (files.length === 0) {
     console.log('No changed files found.')
     return
   }
 
-  const branch = await getCurrentBranch(repoRoot)
-  console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}\n`)
+  const branchSummary = await git.branch()
+  const branch = branchSummary.detached
+    ? '(detached HEAD)'
+    : branchSummary.current
+  console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}\n`)
 
   if (forceStageEnabled) {
-    console.log(chalk.yellow.dim(' Staging all files..'))
+    console.log(chalk.yellow.dim(' Staging all files..'))
   }
 
   const selectedFiles = forceStageEnabled
@@ -78,42 +74,25 @@ export async function mainController(options: MainControllerOptions = {}) {
   console.log(filesToStage.join('\n'))
   console.log('')
 
-  await stageFiles(filesToStage, repoRoot)
-
-  const apiKey = resolveApiKey(model.apiKeyEnv)
+  await git.add(filesToStage)
 
   if (finalCommitMessage.length > 0) {
-    console.log(chalk.yellow.dim(' Using provided commit message'))
+    console.log(chalk.yellow.dim(' Using provided commit message'))
     console.log(chalk.magenta.dim(finalCommitMessage))
   }
 
   if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
-    finalCommitMessage = await promptForCommitMessageInput({
-      model: model.model,
-      hasKey: apiKey !== null,
-    })
+    finalCommitMessage = await promptForCommitMessageInput(modelConfig.model)
   }
 
   if (finalCommitMessage.length === 0) {
-    if (!apiKey) {
-      throw new Error(
-        `No API key found. Set 'apiKeyEnv' for the '${modelKey}' model in your config to the environment variable holding the key.`
-      )
-    }
-
     while (true) {
       if (forceLLMGenerate) {
-        console.log(chalk.yellow.dim(' Using LLM to generate message'))
+        console.log(chalk.yellow.dim(' Using LLM to generate message'))
       }
 
       const llmResult = await runWithLoading('Generating commit message', () =>
-        generateCommitMessage(repoRoot, config, {
-          npm: model.npm,
-          apiKey,
-          model: model.model,
-          apiUrl: model.apiUrl,
-          options: model.options,
-        })
+        generateCommitMessage(languageModel, config.instructions ?? null, git)
       )
 
       finalCommitMessage = llmResult.text.trim()
@@ -139,9 +118,9 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   console.log('')
-  console.log(chalk.yellow.dim(' Committing staged changes'))
+  console.log(chalk.yellow.dim(' Committing staged changes'))
 
-  await commitChanges(finalCommitMessage, repoRoot)
+  await liveGit.commit(finalCommitMessage)
   console.log('')
 
   if (!config.postCommand) {
@@ -149,7 +128,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   if (forceExecPostCommand || config.autoRunPostCommand) {
-    console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
+    console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
     if (!shouldRunPostCommand) {
@@ -157,5 +136,8 @@ export async function mainController(options: MainControllerOptions = {}) {
     }
   }
 
-  await runPostCommand(config.postCommand, repoRoot)
+  await liveGit.push()
+  if (config.postCommand === 'push-and-pull') {
+    await liveGit.pull()
+  }
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { PROVIDER_NPM_PACKAGES } from './lib/llm/providers'
 
-const modelSchema = z.object({
+export const modelSchema = z.object({
   npm: z.enum(PROVIDER_NPM_PACKAGES).default('@ai-sdk/openai-compatible'),
 
   apiKeyEnv: z.union([z.string().min(1), z.array(z.string().min(1))]),

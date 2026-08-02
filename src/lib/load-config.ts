@@ -27,11 +27,11 @@ export async function loadConfig(cwd = process.cwd()) {
   })
 }
 
-export async function readProjectConfig(cwd = process.cwd()) {
+async function readProjectConfig(cwd = process.cwd()) {
   return readConfigFile(path.join(cwd, PROJECT_CONFIG_FILE_NAME))
 }
 
-export async function readGlobalConfig() {
+async function readGlobalConfig() {
   return readConfigFile(GLOBAL_CONFIG_FILE_PATH)
 }
 

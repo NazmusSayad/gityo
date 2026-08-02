@@ -1,16 +1,14 @@
-import { generateText } from 'ai'
-import type { ResolvedConfig } from '../../schema'
-import { getStagedDiff } from '../git'
-import { resolveAiModel, type ResolveAiModelConfig } from './resolve-ai-model'
+import { generateText, type LanguageModel } from 'ai'
+import type { SimpleGit } from 'simple-git'
 import systemPrompt from './system-prompt.txt?raw'
 
 export async function generateCommitMessage(
-  cwd: string,
-  config: ResolvedConfig,
-  model: ResolveAiModelConfig
+  languageModel: LanguageModel,
+  instructions: string | null,
+  git: SimpleGit
 ) {
   const result = await generateText({
-    model: resolveAiModel(model),
+    model: languageModel,
 
     messages: [
       {
@@ -19,12 +17,12 @@ export async function generateCommitMessage(
       },
       {
         role: 'user',
-        content: `Staged diff:\n${await getStagedDiff(cwd)}`,
+        content: `Staged diff:\n${await git.raw(['diff', '--cached', '--no-ext-diff'])}`,
       },
       {
         role: 'user',
         content:
-          config.instructions ||
+          instructions ||
           'Generate a concise git commit message based on the above instructions and diff.',
       },
     ],
