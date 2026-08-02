@@ -47,9 +47,8 @@ const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
     const header = `${prefix} ${messageColor(config.message)}`
 
     if (status === 'done') {
-      return value.length === 0
-        ? header
-        : `${header}\n${chalk.magenta.dim(value)}`
+      if (value.length === 0) return header
+      return `${header}\n${chalk.cyan.dim(value)}\n`
     }
 
     return `${header}\n${inputPrefix}${value}`
