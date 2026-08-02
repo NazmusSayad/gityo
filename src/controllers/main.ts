@@ -107,7 +107,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   if (forceLLMGenerate) {
-    console.log(chalk.green('✓ Committing changes..'))
+    console.log(chalk.green('✓ Committing changes'))
   }
 
   if (!hasStaged) {
@@ -125,7 +125,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   if (forceExecPostCommand || config.autoRunPostCommand) {
-    console.log(chalk.yellow.dim(`✓ Executing: ${config.postCommand}`))
+    console.log(chalk.yellow(`✓ Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
     if (!shouldRunPostCommand) {
