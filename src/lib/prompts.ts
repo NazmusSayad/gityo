@@ -56,9 +56,13 @@ export async function acceptGeneratedCommitMessage() {
     message: `${'Accept generated commit message?'} ${chalk.reset.dim('[Y/r]')}`,
     theme: selectionTheme,
     validate: (v) => {
-      const normalized = v.trim().toLowerCase()
-
-      if (normalized === '' || normalized === 'y' || normalized === 'r') {
+      const normalized = v.trim()
+      if (
+        normalized === 'Y' ||
+        normalized === 'y' ||
+        normalized === 'r' ||
+        normalized === ''
+      ) {
         return true
       }
 
