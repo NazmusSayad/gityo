@@ -4,8 +4,8 @@ import { generateCommitMessage } from '../lib/llm/generate-commit-message'
 import { resolveLanguageModel } from '../lib/llm/resolve-language-model'
 import { loadConfig } from '../lib/load-config'
 import {
+  acceptGeneratedCommitMessage,
   promptForCommitMessageInput,
-  promptForGeneratedCommitAction,
   promptForPostCommand,
 } from '../lib/prompts'
 import { runWithLoading } from '../lib/run-with-loading'
@@ -97,10 +97,8 @@ export async function mainController(options: MainControllerOptions = {}) {
         break
       }
 
-      const action = await promptForGeneratedCommitAction()
-      if (action === 'accept' || action === 'cancel') {
-        break
-      }
+      const action = await acceptGeneratedCommitMessage()
+      if (action) break
     }
   }
 
