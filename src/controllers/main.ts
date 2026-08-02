@@ -55,7 +55,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   const { diff, hasStaged } = await getCommitDiff(git)
 
   if (finalCommitMessage.length > 0) {
-    console.log(chalk.yellow.dim('✓ Using provided commit message'))
+    console.log(chalk.yellow('✓ Using direct commit message'))
     console.log(chalk.cyan.dim(finalCommitMessage))
     console.log('')
   }
@@ -67,7 +67,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (finalCommitMessage.length === 0) {
     while (true) {
       if (forceLLMGenerate) {
-        console.log(chalk.yellow.dim('✓ Using LLM to generate message'))
+        console.log(chalk.yellow('• Using LLM to generate message'))
       }
 
       const llmResult = await runWithLoading('Generating commit message', () =>
