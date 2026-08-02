@@ -62,7 +62,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   const { diff, hasStaged } = await getCommitDiff(git)
 
   if (finalCommitMessage.length > 0) {
-    console.log(chalk.yellow.dim(' Using provided commit message'))
+    console.log(chalk.yellow.dim('✓ Using provided commit message'))
     console.log(chalk.magenta.dim(finalCommitMessage))
   }
 
@@ -73,7 +73,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (finalCommitMessage.length === 0) {
     while (true) {
       if (forceLLMGenerate) {
-        console.log(chalk.yellow.dim(' Using LLM to generate message'))
+        console.log(chalk.yellow.dim('✓ Using LLM to generate message'))
       }
 
       const llmResult = await runWithLoading('Generating commit message', () =>
@@ -104,13 +104,13 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   console.log('')
   if (!hasStaged) {
-    console.log(chalk.yellow.dim(' Staging all files..'))
+    console.log(chalk.yellow.dim('✓ Staging all files..'))
     await git.add(['-A'])
   }
 
   console.log(files.join('\n'))
   console.log('')
-  console.log(chalk.yellow.dim(' Committing staged changes'))
+  console.log(chalk.yellow.dim('✓ Committing staged changes'))
 
   await liveGit.commit(finalCommitMessage)
   console.log('')
@@ -120,7 +120,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   if (forceExecPostCommand || config.autoRunPostCommand) {
-    console.log(chalk.yellow.dim(` Executing: ${config.postCommand}`))
+    console.log(chalk.yellow.dim(`✓ Executing: ${config.postCommand}`))
   } else {
     const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
     if (!shouldRunPostCommand) {

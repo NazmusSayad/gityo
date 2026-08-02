@@ -5,7 +5,7 @@ import chalk from 'chalk'
 const selectionTheme = {
   prefix: {
     idle: chalk.blue('?'),
-    done: chalk.green(''),
+    done: chalk.green('✓'),
   },
 
   style: {
@@ -42,7 +42,7 @@ const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
       done(answer)
     })
 
-    const prefix = status === 'done' ? chalk.green('') : chalk.blue('?')
+    const prefix = status === 'done' ? chalk.green('✓') : chalk.blue('?')
     const messageColor = status === 'done' ? chalk.green : chalk.blue
     const header = `${prefix} ${messageColor(config.message)}`
 
