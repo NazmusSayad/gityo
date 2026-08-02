@@ -106,10 +106,14 @@ export async function mainController(options: MainControllerOptions = {}) {
     throw new Error('Commit message cannot be empty.')
   }
 
+  if (forceLLMGenerate) {
+    console.log(chalk.green('✓ Committing changes'))
+  }
+
   if (!hasStaged) {
     await git.add(['-A'])
   }
-   
+
   console.log(files.join('\n'))
   console.log('')
 
