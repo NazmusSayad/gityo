@@ -1,11 +1,10 @@
 import { generateText, type LanguageModel } from 'ai'
-import type { SimpleGit } from 'simple-git'
 import systemPrompt from './system-prompt.txt?raw'
 
 export async function generateCommitMessage(
   languageModel: LanguageModel,
   instructions: string | null,
-  git: SimpleGit
+  diff: string
 ) {
   const result = await generateText({
     model: languageModel,
@@ -17,7 +16,7 @@ export async function generateCommitMessage(
       },
       {
         role: 'user',
-        content: `Staged diff:\n${await git.raw(['diff', '--cached', '--no-ext-diff'])}`,
+        content: `Changes:\n${diff}`,
       },
       {
         role: 'user',

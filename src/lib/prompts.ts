@@ -1,5 +1,5 @@
 import { createPrompt, isEnterKey, useKeypress, useState } from '@inquirer/core'
-import { checkbox, confirm, input } from '@inquirer/prompts'
+import { confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
 
 const selectionTheme = {
@@ -81,24 +81,6 @@ export async function promptForGeneratedCommitAction() {
       theme: selectionTheme,
     })
   )
-}
-
-export async function promptForFilesToStage(files: string[]) {
-  return checkbox({
-    message: `Select files to stage ${chalk.reset.dim('(⏎ submit)')}`,
-    choices: files.map((file) => ({
-      name: file,
-      value: file,
-    })),
-    pageSize: 12,
-    theme: {
-      ...selectionTheme,
-      style: {
-        ...selectionTheme.style,
-        answer: () => '',
-      },
-    },
-  })
 }
 
 export async function promptForCommitMessageInput(model: string) {

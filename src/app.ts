@@ -8,7 +8,6 @@ export const app = new Command()
   .description(
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.'
   )
-  .option('-s, --stage', 'Stage all changes without asking.')
   .option('-g, --generate', 'Generate a commit message without asking.')
   .option(
     '-m, --message <message>',
@@ -21,7 +20,7 @@ export const app = new Command()
   )
   .option(
     '-y, --yolo',
-    'Skip all questions, and stage, generate message, commit, run post command. [Will fail if no model available]'
+    'Skip all questions, and generate message, commit, run post command. [Will fail if no model available]'
   )
   .action((options) => {
     if (options.generate && options.message) {
