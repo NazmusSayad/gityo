@@ -107,7 +107,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   if (forceLLMGenerate) {
-    console.log(chalk.green('✓ Committing changes'))
+    console.log(chalk.green('✓ Committing changes..'))
   }
 
   if (!hasStaged) {
