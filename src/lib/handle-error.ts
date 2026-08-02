@@ -1,3 +1,4 @@
+import chalk from 'chalk'
 import { AppUserCanceledError } from './errors'
 
 export function handleError(fn: () => Promise<void> | void) {
@@ -9,7 +10,7 @@ export function handleError(fn: () => Promise<void> | void) {
       }
 
       if (err instanceof Error) {
-        console.error('ERROR:', err.message)
+        console.error(chalk.red('ERROR:'), err.message)
         process.exit(1)
       }
     })

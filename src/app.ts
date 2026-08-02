@@ -1,10 +1,12 @@
 import { Command } from '@commander-js/extra-typings'
+import pkg from '../package.json'
 import { showConfigController } from './controllers/config'
 import { mainController } from './controllers/main'
 import { handleError } from './lib/handle-error'
 
 export const app = new Command()
   .name('gityo')
+  .version(`v${pkg.version}`, '-v, --version', 'Show the current version.')
   .description(
     'Stage changes, generate or enter a commit message, create a commit, and run a post-commit git command.'
   )
