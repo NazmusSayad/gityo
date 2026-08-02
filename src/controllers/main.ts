@@ -57,7 +57,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   const branch = branchSummary.detached
     ? '(detached HEAD)'
     : branchSummary.current
-  console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}\n`)
+  console.log(`${chalk.cyan(' Branch:')} ${chalk.reset.bold(branch)}`)
 
   const { diff, hasStaged } = await getCommitDiff(git)
 

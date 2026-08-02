@@ -8,12 +8,9 @@ export async function generateCommitMessage(
 ) {
   const result = await generateText({
     model: languageModel,
+    instructions: systemPrompt,
 
     messages: [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
       {
         role: 'user',
         content: `Changes:\n${diff}`,
