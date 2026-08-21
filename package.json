@@ -1,6 +1,10 @@
 {
   "name": "gityo",
   "version": "1.0.10",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NazmusSayad/gityo.git"
+  },
   "sideEffects": false,
   "type": "module",
   "scripts": {
@@ -13,7 +17,7 @@
     "json": "tsx ./src/json.ts"
   },
   "bin": {
-    "gityo": "./dist/index.js"
+    "gityo": "dist/index.js"
   },
   "devDependencies": {
     "@ai-sdk/amazon-bedrock": "^5.0.40",
