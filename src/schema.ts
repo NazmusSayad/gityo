@@ -22,6 +22,9 @@ export const configSchema = z
     autoAcceptMessage: z.boolean(),
     instructions: z.string().min(1),
 
+    maxDiffTokens: z.number().int().min(1000),
+    perFileCap: z.number().int().min(50),
+
     postCommand: z.enum(['push', 'push-and-pull']).nullable(),
     autoRunPostCommand: z.boolean(),
   })
@@ -35,6 +38,9 @@ export function resolveConfig(input: unknown) {
 
     instructions: parsed.instructions,
     autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,
+
+    maxDiffTokens: parsed.maxDiffTokens,
+    perFileCap: parsed.perFileCap,
 
     postCommand:
       parsed.postCommand === undefined ? ('push' as const) : parsed.postCommand,

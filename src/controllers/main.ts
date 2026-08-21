@@ -1,6 +1,19 @@
+import type { LanguageModel } from 'ai'
 import chalk from 'chalk'
+import type { SimpleGit } from 'simple-git'
+import {
+  DEFAULT_MAX_DIFF_TOKENS,
+  DEFAULT_PER_FILE_CAP,
+  estimateTokens,
+  minimizeDiff,
+  splitDiffIntoChunks,
+} from '../lib/diff'
 import { getChangedFiles, getCommitDiff, getGit } from '../lib/git'
-import { generateCommitMessage } from '../lib/llm/generate-commit-message'
+import {
+  generateCommitMessage,
+  generateCommitMessageFromSummaries,
+  summarizeChanges,
+} from '../lib/llm/generate-commit-message'
 import { resolveLanguageModel } from '../lib/llm/resolve-language-model'
 import { loadConfig } from '../lib/load-config'
 import {
@@ -17,6 +30,11 @@ type MainControllerOptions = {
   post?: boolean
   yolo?: boolean
 }
+
+const MAP_CONCURRENCY = 3
+const PROMPT_RESERVE_TOKENS = 800
+const MIN_CHUNK_BUDGET_TOKENS = 1000
+const MAX_TOC_LINES = 500
 
 export async function mainController(options: MainControllerOptions = {}) {
   const { git, liveGit } = await getGit()
@@ -78,11 +96,15 @@ export async function mainController(options: MainControllerOptions = {}) {
       const commitMessage = await runWithLoading(
         'Generating commit message',
         () =>
-          generateCommitMessage(
+          generateMessage({
+            git,
             languageModel,
-            config.instructions ?? null,
-            diff
-          )
+            instructions: config.instructions ?? null,
+            diff,
+            files,
+            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
+            perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
+          })
       )
 
       finalCommitMessage = commitMessage.trim()
@@ -137,4 +159,79 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (config.postCommand === 'push-and-pull') {
     await liveGit.pull()
   }
+}
+
+type GenerateMessageOptions = {
+  git: SimpleGit
+  languageModel: LanguageModel
+  instructions: string | null
+  diff: string
+  files: string[]
+  maxDiffTokens: number
+  perFileCap: number
+}
+
+async function generateMessage(options: GenerateMessageOptions) {
+  const { git, languageModel, instructions, diff } = options
+
+  if (estimateTokens(diff) <= options.maxDiffTokens) {
+    return generateCommitMessage(languageModel, instructions, diff)
+  }
+
+  console.log(chalk.yellow('• Large diff detected, minimizing'))
+
+  const { toc, body } = await minimizeDiff(git, {
+    perFileCap: options.perFileCap,
+    allFiles: options.files,
+  })
+
+  if (estimateTokens(toc) + estimateTokens(body) <= options.maxDiffTokens) {
+    return generateCommitMessage(
+      languageModel,
+      instructions,
+      `${toc}\n\n${body}`
+    )
+  }
+
+  console.log(chalk.yellow('• Diff still too large, summarizing in parts'))
+
+  let effectiveToc = toc
+  let chunkBudget =
+    options.maxDiffTokens - estimateTokens(effectiveToc) - PROMPT_RESERVE_TOKENS
+
+  if (chunkBudget < MIN_CHUNK_BUDGET_TOKENS) {
+    effectiveToc = toc.split('\n').slice(0, MAX_TOC_LINES).join('\n')
+    chunkBudget = Math.max(
+      options.maxDiffTokens -
+        estimateTokens(effectiveToc) -
+        PROMPT_RESERVE_TOKENS,
+      MIN_CHUNK_BUDGET_TOKENS
+    )
+  }
+
+  const chunks = splitDiffIntoChunks(body, chunkBudget)
+  const summaries = new Array<string>(chunks.length)
+  let nextChunk = 0
+
+  async function worker() {
+    while (nextChunk < chunks.length) {
+      const index = nextChunk++
+      summaries[index] = await summarizeChanges(
+        languageModel,
+        effectiveToc,
+        chunks[index]
+      )
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(MAP_CONCURRENCY, chunks.length) }, worker)
+  )
+
+  return generateCommitMessageFromSummaries(
+    languageModel,
+    instructions,
+    effectiveToc,
+    summaries
+  )
 }

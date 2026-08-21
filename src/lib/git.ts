@@ -37,21 +37,27 @@ export async function getChangedFiles(git: SimpleGit) {
   ).sort((left, right) => left.localeCompare(right))
 }
 
-export async function getCommitDiff(git: SimpleGit) {
-  const staged = await git.raw(['diff', '--cached', '--no-ext-diff'])
+export async function getCommitDiff(git: SimpleGit, contextLines = 3) {
+  const unified = [`-U${contextLines}`]
+  const staged = await git.raw([
+    'diff',
+    '--cached',
+    '--no-ext-diff',
+    ...unified,
+  ])
 
   if (staged.trim().length > 0) {
     return { diff: staged, hasStaged: true }
   }
 
   const [unstaged, untracked] = await Promise.all([
-    git.raw(['diff', '--no-ext-diff']),
+    git.raw(['diff', '--no-ext-diff', ...unified]),
     git.raw(['ls-files', '--others', '--exclude-standard', '-z']),
   ])
 
   const untrackedDiffs = await Promise.all(
     splitNull(untracked).map((file) =>
-      git.raw(['diff', '--no-index', '--', '/dev/null', file])
+      git.raw(['diff', '--no-index', ...unified, '--', '/dev/null', file])
     )
   )
 

@@ -154,9 +154,26 @@ Example:
   "autoAcceptMessage": false,
   "postCommand": "push",
   "autoRunPostCommand": false,
-  "instructions": "Write short, clear commit messages."
+  "instructions": "Write short, clear commit messages.",
+  "maxDiffTokens": 24000,
+  "perFileCap": 400
 }
 ```
+
+### Large changes
+
+When the diff is small, it is sent to the model as-is. When it is too large for one request, gityo minimizes it first:
+
+- regenerates the diff with minimal context lines
+- drops lock files and minified/generated files from the payload
+- caps each file's patch and lists every changed file with its line counts so the model still sees the full picture
+
+If the minimized diff is still too large, each remaining part is summarized in parallel and a final commit message is generated from those summaries.
+
+Two optional config knobs control this:
+
+- `maxDiffTokens` — estimated token budget for the diff sent to the model (default `24000`)
+- `perFileCap` — max diff lines kept per file when minimizing (default `400`)
 
 Example instructions file:
 
