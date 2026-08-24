@@ -1,7 +1,7 @@
 import type { SimpleGit } from 'simple-git'
 import { getCommitDiff } from './git'
 
-export const DEFAULT_MAX_DIFF_TOKENS = 24000
+export const DEFAULT_MAX_DIFF_TOKENS = 2
 export const DEFAULT_PER_FILE_CAP = 400
 
 const CHARS_PER_TOKEN = 4

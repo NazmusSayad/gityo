@@ -122,8 +122,8 @@ export async function mainController(options: MainControllerOptions = {}) {
             instructions,
             diff,
             files,
-            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
             perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
+            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
           })
       )
 

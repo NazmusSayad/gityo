@@ -119,7 +119,7 @@ gityo config
 Config is edited by hand in a JSON file. Project config goes in:
 
 ```text
-.gityo.config.json
+.gityo.json
 ```
 
 Global config goes in:
@@ -219,5 +219,5 @@ Keep the subject line under 72 characters.
 Priority is simple:
 
 - `.gityo.md` for repo-specific instructions
-- `.gityo.config.json` for project config
+- `.gityo.json` for project config
 - `~/.config/gityo.json` for your defaults

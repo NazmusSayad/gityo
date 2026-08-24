@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { configSchema, resolveConfig } from '../schema'
 
-export const PROJECT_CONFIG_FILE_NAME = '.gityo.config.json'
+export const PROJECT_CONFIG_FILE_NAME = '.gityo.json'
 export const GLOBAL_CONFIG_FILE_PATH = path.join(
   os.homedir(),
   '.config',
