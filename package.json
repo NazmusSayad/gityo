@@ -8,12 +8,13 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "lint": "tsc --noEmit && eslint .",
-    "fix": "tsc --noEmit && eslint . --fix",
-    "start": "tsx --watch ./src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "build": "tsdown --config ./tsdown.config.ts",
-    "dev": "concurrently --names \"R,T\" --prefix-colors \"blue.dim,magenta.dim\" \"tsdown --config ./tsdown.config.ts --watch\" \"tsc --noEmit --watch\"",
-    "dev:tsc": "tsc --noEmit --watch",
+    "dev": "tsdown --config ./tsdown.config.ts --watch",
+    "start": "node --watch ./dist/index.js",
     "json": "tsx ./src/json.ts"
   },
   "bin": {
