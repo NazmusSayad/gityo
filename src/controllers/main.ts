@@ -13,8 +13,8 @@ import {
   generateCommitMessage,
   generateCommitMessageFromSummaries,
   summarizeChanges,
-} from '../lib/llm/generate-commit-message'
-import { resolveLanguageModel } from '../lib/llm/resolve-language-model'
+} from '../lib/llm/message'
+import { resolveLanguageModel } from '../lib/llm/model'
 import { loadConfig } from '../lib/load-config'
 import {
   acceptGeneratedCommitMessage,
