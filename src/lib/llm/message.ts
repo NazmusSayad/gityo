@@ -1,5 +1,4 @@
 import { generateText, type LanguageModel } from 'ai'
-import systemPrompt from './prompts/default.md?raw'
 
 const summarizePrompt = `You summarize parts of a large git diff for a commit message generator.
 Describe WHAT changed, in which files or modules, and any observable intent.
@@ -23,10 +22,11 @@ async function ask(
 
 export async function generateCommitMessage(
   languageModel: LanguageModel,
+  style: string,
   instructions: string | null,
   diff: string
 ) {
-  return ask(languageModel, systemPrompt, [
+  return ask(languageModel, style, [
     { role: 'user', content: `Changes:\n${diff}` },
     {
       role: 'user',
@@ -52,7 +52,8 @@ export async function summarizeChanges(
 }
 
 export async function generateCommitMessageFromSummaries(
-  languageModel: LanguageModel,
+  llm: LanguageModel,
+  style: string,
   instructions: string | null,
   toc: string,
   summaries: string[]
@@ -61,7 +62,7 @@ export async function generateCommitMessageFromSummaries(
     .map((summary, index) => `Part ${index + 1}:\n${summary}`)
     .join('\n\n')
 
-  return ask(languageModel, systemPrompt, [
+  return ask(llm, style, [
     {
       role: 'user',
       content: `All changed files:\n${toc}\n\nSummaries of all changes:\n${combined}`,

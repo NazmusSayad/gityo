@@ -15,6 +15,10 @@ export const app = new Command()
     'Use the provided input as the commit message.'
   )
   .option(
+    '-s, --style <style>',
+    'Commit message style key to use (defaults to "default").'
+  )
+  .option(
     '-m, --model <model>',
     'Model key from config to use (defaults to "default").'
   )

@@ -15,6 +15,11 @@ import {
   summarizeChanges,
 } from '../lib/llm/message'
 import { resolveLanguageModel } from '../lib/llm/model'
+import {
+  getStyleKeys,
+  resolveInstructionContent,
+  resolveStyle,
+} from '../lib/llm/style'
 import { loadConfig } from '../lib/load-config'
 import {
   acceptGeneratedCommitMessage,
@@ -27,6 +32,7 @@ type MainControllerOptions = {
   generate?: boolean
   input?: string
   model?: string
+  style?: string
   post?: boolean
   yolo?: boolean
 }
@@ -56,6 +62,19 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 
   const languageModel = resolveLanguageModel(modelConfig)
+
+  const styleKey = options.style ?? config.style ?? 'default'
+  const style = await resolveStyle(styleKey, config.styles)
+  if (!style) {
+    const availableStyles = getStyleKeys(config.styles).join(', ')
+    throw new Error(
+      `Style '${styleKey}' is not configured. Available styles: ${availableStyles}.`
+    )
+  }
+
+  const instructions = config.instructions
+    ? await resolveInstructionContent(config.instructions)
+    : null
 
   const forceLLMGenerate = options.generate || options.yolo
   const forceExecPostCommand = options.post || options.yolo
@@ -99,7 +118,8 @@ export async function mainController(options: MainControllerOptions = {}) {
           generateMessage({
             git,
             languageModel,
-            instructions: config.instructions ?? null,
+            style,
+            instructions,
             diff,
             files,
             maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
@@ -164,6 +184,7 @@ export async function mainController(options: MainControllerOptions = {}) {
 type GenerateMessageOptions = {
   git: SimpleGit
   languageModel: LanguageModel
+  style: string
   instructions: string | null
   diff: string
   files: string[]
@@ -172,10 +193,10 @@ type GenerateMessageOptions = {
 }
 
 async function generateMessage(options: GenerateMessageOptions) {
-  const { git, languageModel, instructions, diff } = options
+  const { git, languageModel, style, instructions, diff } = options
 
   if (estimateTokens(diff) <= options.maxDiffTokens) {
-    return generateCommitMessage(languageModel, instructions, diff)
+    return generateCommitMessage(languageModel, style, instructions, diff)
   }
 
   console.log(chalk.yellow('• Large diff detected, minimizing'))
@@ -188,6 +209,7 @@ async function generateMessage(options: GenerateMessageOptions) {
   if (estimateTokens(toc) + estimateTokens(body) <= options.maxDiffTokens) {
     return generateCommitMessage(
       languageModel,
+      style,
       instructions,
       `${toc}\n\n${body}`
     )
@@ -230,6 +252,7 @@ async function generateMessage(options: GenerateMessageOptions) {
 
   return generateCommitMessageFromSummaries(
     languageModel,
+    style,
     instructions,
     effectiveToc,
     summaries
