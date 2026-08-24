@@ -20,7 +20,7 @@ export const app = new Command()
   )
   .option('-p, --post', 'Run the post-commit git command without asking.')
   .option(
-    '--model <model>',
+    '-m, --model <model>',
     'Model key from config to use (defaults to "default").'
   )
   .option(
