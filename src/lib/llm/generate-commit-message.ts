@@ -1,5 +1,5 @@
 import { generateText, type LanguageModel } from 'ai'
-import systemPrompt from './system-prompt.txt?raw'
+import systemPrompt from './prompts/default.md?raw'
 
 const summarizePrompt = `You summarize parts of a large git diff for a commit message generator.
 Describe WHAT changed, in which files or modules, and any observable intent.
