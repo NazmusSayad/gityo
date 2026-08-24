@@ -46,13 +46,13 @@ If you already staged files before running `gityo`, only those are used for the 
 gityo
 gityo --generate
 gityo --model fast --generate
-gityo --message "fix login redirect bug"
+gityo --input "fix login redirect bug"
 gityo --yolo
 ```
 
 ## AI setup
 
-A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--message`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
+A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
 
 ```json
 {

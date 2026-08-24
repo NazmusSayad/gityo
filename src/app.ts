@@ -15,8 +15,8 @@ export const app = new Command()
     'Generate a commit message and commit without asking.'
   )
   .option(
-    '-m, --message <message>',
-    'Use the provided message as the commit message.'
+    '-i, --input <input>',
+    'Use the provided input as the commit message.'
   )
   .option('-p, --post', 'Run the post-commit git command without asking.')
   .option(
@@ -28,8 +28,8 @@ export const app = new Command()
     'Skip all questions, and generate message, commit, run post command. [Will fail if no model available]'
   )
   .action((options) => {
-    if (options.generate && options.message) {
-      console.error('Cannot use --generate and --message together.')
+    if (options.generate && options.input) {
+      console.error('Cannot use --generate and --input together.')
       process.exit(1)
     }
 

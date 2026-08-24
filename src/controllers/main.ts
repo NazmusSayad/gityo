@@ -25,7 +25,7 @@ import { runWithLoading } from '../lib/run-with-loading'
 
 type MainControllerOptions = {
   generate?: boolean
-  message?: string
+  input?: string
   model?: string
   post?: boolean
   yolo?: boolean
@@ -60,9 +60,9 @@ export async function mainController(options: MainControllerOptions = {}) {
   const forceLLMGenerate = options.generate || options.yolo
   const forceExecPostCommand = options.post || options.yolo
 
-  let finalCommitMessage = options.message?.trim() ?? ''
-  if (typeof options.message === 'string' && finalCommitMessage.length === 0) {
-    throw new Error('Provided commit message cannot be empty.')
+  let finalCommitMessage = options.input?.trim() ?? ''
+  if (typeof options.input === 'string' && finalCommitMessage.length === 0) {
+    throw new Error('Provided commit message input cannot be empty.')
   }
 
   const files = await getChangedFiles(git)
