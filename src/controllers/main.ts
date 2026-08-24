@@ -199,8 +199,6 @@ async function generateMessage(options: GenerateMessageOptions) {
     return generateCommitMessage(languageModel, style, instructions, diff)
   }
 
-  console.log(chalk.yellow('• Large diff detected, minimizing'))
-
   const { toc, body } = await minimizeDiff(git, {
     perFileCap: options.perFileCap,
     allFiles: options.files,
@@ -214,8 +212,6 @@ async function generateMessage(options: GenerateMessageOptions) {
       `${toc}\n\n${body}`
     )
   }
-
-  console.log(chalk.yellow('• Diff still too large, summarizing in parts'))
 
   let effectiveToc = toc
   let chunkBudget =
