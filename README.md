@@ -173,9 +173,13 @@ Example:
 ### Commit message styles
 
 Styles control the base commit-message convention sent to the model. Built-in
-styles are `default`, `concise`, and `explanatory`. `default` uses conventional
-commits with an optional explanatory body, `concise` always produces a single
-subject line, and `explanatory` allows a longer subject and explanatory body.
+styles are `default`, `concise`, `explanatory`, `plain`, and `gitmoji`.
+
+- `default` uses conventional commits with an optional explanatory body.
+- `concise` always produces a short conventional commit subject line.
+- `explanatory` allows a longer conventional subject and explanatory body.
+- `plain` produces a short, non-conventional imperative subject line.
+- `gitmoji` prefixes a conventional subject with a relevant gitmoji.
 
 Choose a default with `style`, or select one for a command with `--style`:
 

@@ -5,11 +5,15 @@ import { instructionSchema } from '../../schema'
 import conciseStyle from './prompts/concise.md?raw'
 import defaultStyle from './prompts/default.md?raw'
 import explanatoryStyle from './prompts/explanatory.md?raw'
+import gitmojiStyle from './prompts/gitmoji.md?raw'
+import plainStyle from './prompts/plain.md?raw'
 
 export const BUILTIN_STYLES: Record<string, string> = {
   default: defaultStyle,
   concise: conciseStyle,
   explanatory: explanatoryStyle,
+  plain: plainStyle,
+  gitmoji: gitmojiStyle,
 }
 
 export function getStyleKeys(
