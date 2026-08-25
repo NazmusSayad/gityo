@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "models": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "npm": {
+            "type": "string",
+            "enum": [
+              "@ai-sdk/openai",
+              "@ai-sdk/openai-compatible",
+              "@ai-sdk/anthropic",
+              "@ai-sdk/google",
+              "@ai-sdk/xai",
+              "@ai-sdk/azure",
+              "@ai-sdk/amazon-bedrock",
+              "@ai-sdk/groq",
+              "@ai-sdk/fal",
+              "@ai-sdk/deepinfra",
+              "@ai-sdk/google-vertex",
+              "@ai-sdk/mistral",
+              "@ai-sdk/togetherai",
+              "@ai-sdk/cohere",
+              "@ai-sdk/fireworks",
+              "@ai-sdk/deepseek",
+              "@ai-sdk/cerebras",
+              "@ai-sdk/perplexity",
+              "@ai-sdk/luma",
+              "@openrouter/ai-sdk-provider",
+              "ollama-ai-provider-v2",
+              "ai-sdk-ollama",
+              "vercel-minimax-ai-provider",
+              "@aihubmix/ai-sdk-provider",
+              "ai-gateway-provider",
+              "workers-ai-provider",
+              "@friendliai/ai-provider",
+              "@helicone/ai-sdk-provider",
+              "ai-sdk-provider-opencode-sdk",
+              "sambanova-ai-provider",
+              "zhipu-ai-provider"
+            ]
+          },
+          "apiKeyEnv": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            ]
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "apiUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "options": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "apiKeyEnv",
+          "model"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "instructions": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "path"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "style": {
+      "type": "string",
+      "minLength": 1
+    },
+    "styles": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "maxDiffTokens": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 9007199254740991
+    },
+    "perFileCap": {
+      "type": "integer",
+      "minimum": 50,
+      "maximum": 9007199254740991
+    },
+    "autoAcceptMessage": {
+      "type": "boolean"
+    },
+    "autoRunPostCommand": {
+      "type": "boolean"
+    },
+    "postCommand": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "push",
+            "push-and-pull"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
