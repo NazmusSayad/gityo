@@ -29,7 +29,7 @@ export default defineConfig({
         return resolved ? `${resolved.id}?raw` : null
       },
       async load(id) {
-        if (!id.endsWith('.txt?raw')) {
+        if (!id.endsWith('.txt?raw') && !id.endsWith('.md?raw')) {
           return null
         }
 

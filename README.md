@@ -46,13 +46,14 @@ If you already staged files before running `gityo`, only those are used for the 
 gityo
 gityo --generate
 gityo --model fast --generate
-gityo --message "fix login redirect bug"
+gityo --style concise --generate
+gityo --input "fix login redirect bug"
 gityo --yolo
 ```
 
 ## AI setup
 
-A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--message`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
+A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
 
 ```json
 {
@@ -68,7 +69,8 @@ A configured model is required — gityo won't run without one, and the API key 
       "apiKeyEnv": "OPENAI_API_KEY",
       "model": "gpt-5-mini"
     }
-  }
+  },
+  "style": "concise"
 }
 ```
 
@@ -101,6 +103,7 @@ Then use:
 ```bash
 gityo --generate
 gityo --model fast --generate
+gityo --style concise --generate
 ```
 
 Providers are the official Vercel AI SDK packages: `@ai-sdk/openai`, `@ai-sdk/openai-compatible`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/azure`, `@ai-sdk/amazon-bedrock`, `@ai-sdk/groq`, `@ai-sdk/mistral`, `@ai-sdk/deepseek`, `@ai-sdk/togetherai`, `@ai-sdk/fireworks`, `@ai-sdk/perplexity`, `@ai-sdk/cohere`, `@ai-sdk/cerebras`, `@ai-sdk/luma`, `@ai-sdk/fal`, `@ai-sdk/deepinfra`, `@ai-sdk/google-vertex`, `@openrouter/ai-sdk-provider`, plus `ai-sdk-ollama`, `ollama-ai-provider-v2`, `workers-ai-provider`, `zhipu-ai-provider`, `sambanova-ai-provider`, `vercel-minimax-ai-provider`, `@aihubmix/ai-sdk-provider`, `ai-gateway-provider`, `@friendliai/ai-provider`, `@helicone/ai-sdk-provider`, and `ai-sdk-provider-opencode-sdk`.
@@ -116,7 +119,7 @@ gityo config
 Config is edited by hand in a JSON file. Project config goes in:
 
 ```text
-.gityo.config.json
+.gityo.json
 ```
 
 Global config goes in:
@@ -151,6 +154,13 @@ Example:
       "model": "gpt-5-nano"
     }
   },
+  "style": "concise",
+  "styles": {
+    "team": "Use conventional commits. Keep the subject under 72 characters.",
+    "release": {
+      "path": ".gityo/release-style.md"
+    }
+  },
   "autoAcceptMessage": false,
   "postCommand": "push",
   "autoRunPostCommand": false,
@@ -159,6 +169,35 @@ Example:
   "perFileCap": 400
 }
 ```
+
+### Commit message styles
+
+Styles control the base commit-message convention sent to the model. Built-in
+styles are `default`, `concise`, `explanatory`, `plain`, and `gitmoji`.
+
+- `default` uses conventional commits and adds a body only for substantial,
+  multi-part changes that benefit from more context.
+- `concise` uses conventional commits and adds a body only when it is essential.
+- `explanatory` uses conventional commits and encourages a useful explanatory
+  body.
+- `plain` produces a short, non-conventional imperative subject line.
+- `gitmoji` prefixes a conventional subject with a relevant gitmoji.
+
+Choose a default with `style`, or select one for a command with `--style`:
+
+```bash
+gityo --style team --generate
+```
+
+Custom `styles` extend the built-ins. A custom style with the same name replaces
+the built-in style. A style can be inline text or an object with a `path` to a
+prompt file. File paths are passed to Node's `path.resolve()`, so relative paths
+resolve from the directory where you run `gityo`.
+
+Style selection priority is `--style`, then config `style`, then `default`.
+
+`instructions` uses the same format. Set it to a string or `{ "path": "..." }`
+to load additional instructions from a file.
 
 ### Large changes
 
@@ -186,5 +225,5 @@ Keep the subject line under 72 characters.
 Priority is simple:
 
 - `.gityo.md` for repo-specific instructions
-- `.gityo.config.json` for project config
+- `.gityo.json` for project config
 - `~/.config/gityo.json` for your defaults

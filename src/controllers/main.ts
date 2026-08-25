@@ -13,8 +13,13 @@ import {
   generateCommitMessage,
   generateCommitMessageFromSummaries,
   summarizeChanges,
-} from '../lib/llm/generate-commit-message'
-import { resolveLanguageModel } from '../lib/llm/resolve-language-model'
+} from '../lib/llm/message'
+import { resolveLanguageModel } from '../lib/llm/model'
+import {
+  getStyleKeys,
+  resolveInstructionContent,
+  resolveStyle,
+} from '../lib/llm/style'
 import { loadConfig } from '../lib/load-config'
 import {
   acceptGeneratedCommitMessage,
@@ -25,8 +30,9 @@ import { runWithLoading } from '../lib/run-with-loading'
 
 type MainControllerOptions = {
   generate?: boolean
-  message?: string
+  input?: string
   model?: string
+  style?: string
   post?: boolean
   yolo?: boolean
 }
@@ -57,12 +63,25 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   const languageModel = resolveLanguageModel(modelConfig)
 
+  const styleKey = options.style ?? config.style ?? 'default'
+  const style = await resolveStyle(styleKey, config.styles)
+  if (!style) {
+    const availableStyles = getStyleKeys(config.styles).join(', ')
+    throw new Error(
+      `Style '${styleKey}' is not configured. Available styles: ${availableStyles}.`
+    )
+  }
+
+  const instructions = config.instructions
+    ? await resolveInstructionContent(config.instructions)
+    : null
+
   const forceLLMGenerate = options.generate || options.yolo
   const forceExecPostCommand = options.post || options.yolo
 
-  let finalCommitMessage = options.message?.trim() ?? ''
-  if (typeof options.message === 'string' && finalCommitMessage.length === 0) {
-    throw new Error('Provided commit message cannot be empty.')
+  let finalCommitMessage = options.input?.trim() ?? ''
+  if (typeof options.input === 'string' && finalCommitMessage.length === 0) {
+    throw new Error('Provided commit message input cannot be empty.')
   }
 
   const files = await getChangedFiles(git)
@@ -99,11 +118,12 @@ export async function mainController(options: MainControllerOptions = {}) {
           generateMessage({
             git,
             languageModel,
-            instructions: config.instructions ?? null,
+            style,
+            instructions,
             diff,
             files,
-            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
             perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
+            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
           })
       )
 
@@ -164,6 +184,7 @@ export async function mainController(options: MainControllerOptions = {}) {
 type GenerateMessageOptions = {
   git: SimpleGit
   languageModel: LanguageModel
+  style: string
   instructions: string | null
   diff: string
   files: string[]
@@ -172,13 +193,11 @@ type GenerateMessageOptions = {
 }
 
 async function generateMessage(options: GenerateMessageOptions) {
-  const { git, languageModel, instructions, diff } = options
+  const { git, languageModel, style, instructions, diff } = options
 
   if (estimateTokens(diff) <= options.maxDiffTokens) {
-    return generateCommitMessage(languageModel, instructions, diff)
+    return generateCommitMessage(languageModel, style, instructions, diff)
   }
-
-  console.log(chalk.yellow('• Large diff detected, minimizing'))
 
   const { toc, body } = await minimizeDiff(git, {
     perFileCap: options.perFileCap,
@@ -188,12 +207,11 @@ async function generateMessage(options: GenerateMessageOptions) {
   if (estimateTokens(toc) + estimateTokens(body) <= options.maxDiffTokens) {
     return generateCommitMessage(
       languageModel,
+      style,
       instructions,
       `${toc}\n\n${body}`
     )
   }
-
-  console.log(chalk.yellow('• Diff still too large, summarizing in parts'))
 
   let effectiveToc = toc
   let chunkBudget =
@@ -230,6 +248,7 @@ async function generateMessage(options: GenerateMessageOptions) {
 
   return generateCommitMessageFromSummaries(
     languageModel,
+    style,
     instructions,
     effectiveToc,
     summaries
