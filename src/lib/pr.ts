@@ -110,7 +110,6 @@ export async function createPullRequest(
   }
 
   const content = parsePullRequestContent(draft)
-
   if (content.title.length === 0) {
     throw new Error('The selected model returned an empty pull request title.')
   }
