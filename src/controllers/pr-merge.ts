@@ -17,28 +17,30 @@ export async function mergePullRequestController(
   headArg: string | undefined,
   options: PrMergeControllerOptions = {}
 ) {
-  const { base, head } = await resolvePrBranches(baseArg, headArg)
-  const { config, languageModel, instructions } = await loadPullRequestContext(
-    options.model
-  )
+  const branches = await resolvePrBranches(baseArg, headArg)
+  const context = await loadPullRequestContext(options.model)
 
-  let pullRequest = await findPullRequest(base, head)
+  let pullRequest = await findPullRequest(branches.base, branches.head)
 
   if (pullRequest) {
     console.log(pullRequest.url)
   } else {
     pullRequest = await createPullRequest({
-      base,
-      head,
-      languageModel,
-      instructions,
-      maxDiffTokens: config.maxDiffTokens,
+      base: branches.base,
+      head: branches.head,
+      languageModel: context.languageModel,
+      titleInstructions: context.titleInstructions,
+      bodyInstructions: context.bodyInstructions,
+      template: context.template,
+      maxDiffTokens: context.config.maxDiffTokens,
       autoAccept: options.yolo ?? false,
     })
   }
 
   if (!options.yolo) {
-    const confirmed = await confirmPullRequestMerge(`${base} <- ${head}`)
+    const confirmed = await confirmPullRequestMerge(
+      `${branches.base} <- ${branches.head}`
+    )
 
     if (!confirmed) {
       console.log('Pull request merge cancelled.')

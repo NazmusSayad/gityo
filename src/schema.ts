@@ -30,6 +30,9 @@ export const configSchema = z
     style: z.string().min(1),
     styles: z.record(z.string().min(1), instructionSchema),
 
+    prTitleInstructions: instructionSchema,
+    prBodyInstructions: instructionSchema,
+
     maxDiffTokens: z.number().int().min(1000),
     perFileCap: z.number().int().min(50),
 
@@ -48,6 +51,9 @@ export function resolveConfig(input: unknown) {
     style: parsed.style,
     styles: parsed.styles,
     instructions: parsed.instructions,
+
+    prTitleInstructions: parsed.prTitleInstructions,
+    prBodyInstructions: parsed.prBodyInstructions,
 
     maxDiffTokens: parsed.maxDiffTokens,
     perFileCap: parsed.perFileCap,

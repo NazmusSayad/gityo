@@ -1,5 +1,7 @@
 import type { LanguageModel } from 'ai'
 import chalk from 'chalk'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import { DEFAULT_MAX_DIFF_TOKENS, estimateTokens } from './diff'
 import {
   createPullRequest as createPullRequestApi,
@@ -18,6 +20,15 @@ import { runWithLoading } from './run-with-loading'
 import { exec } from './shell'
 
 const PR_URL_PATTERN = /https:\/\/[^\s]+\/pull\/(\d+)/
+
+const PR_TEMPLATE_PATHS = [
+  '.github/pull_request_template.md',
+  '.github/PULL_REQUEST_TEMPLATE.md',
+  'pull_request_template.md',
+  'PULL_REQUEST_TEMPLATE.md',
+  'docs/pull_request_template.md',
+  'docs/PULL_REQUEST_TEMPLATE.md',
+]
 
 export async function getCurrentBranch() {
   const output = await exec('git', ['branch', '--show-current'])
@@ -55,7 +66,9 @@ export type CreatePullRequestOptions = {
   base: string
   head: string
   languageModel: LanguageModel
-  instructions: string | null
+  titleInstructions: string | null
+  bodyInstructions: string | null
+  template: string | null
   maxDiffTokens?: number
   autoAccept?: boolean
 }
@@ -70,11 +83,21 @@ export async function loadPullRequestContext(modelKey?: string) {
   const config = await loadConfig(repoRoot)
   const modelConfig = resolveModelConfig(config.models, modelKey ?? 'default')
   const languageModel = resolveLanguageModel(modelConfig)
-  const instructions = config.instructions
-    ? await resolveInstructionContent(config.instructions)
+  const titleInstructions = config.prTitleInstructions
+    ? await resolveInstructionContent(config.prTitleInstructions)
     : null
+  const bodyInstructions = config.prBodyInstructions
+    ? await resolveInstructionContent(config.prBodyInstructions)
+    : null
+  const template = await readPullRequestTemplate(repoRoot)
 
-  return { config, languageModel, instructions }
+  return {
+    config,
+    languageModel,
+    titleInstructions,
+    bodyInstructions,
+    template,
+  }
 }
 
 export async function createPullRequest(
@@ -93,7 +116,13 @@ export async function createPullRequest(
   let draft = await runWithLoading(
     'Generating pull request title and body',
     () =>
-      generatePullRequest(options.languageModel, options.instructions, context)
+      generatePullRequest({
+        languageModel: options.languageModel,
+        titleInstructions: options.titleInstructions,
+        bodyInstructions: options.bodyInstructions,
+        template: options.template,
+        context,
+      })
   )
 
   while (true) {
@@ -105,7 +134,13 @@ export async function createPullRequest(
     }
 
     draft = await runWithLoading('Generating pull request title and body', () =>
-      generatePullRequest(options.languageModel, options.instructions, context)
+      generatePullRequest({
+        languageModel: options.languageModel,
+        titleInstructions: options.titleInstructions,
+        bodyInstructions: options.bodyInstructions,
+        template: options.template,
+        context,
+      })
     )
   }
 
@@ -177,12 +212,6 @@ function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
         .map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`))
         .join('\n')
     ),
-    '',
-    'Changed files:',
-    ...files.map(
-      (file) =>
-        `- ${file.filename} (${file.status} +${file.additions} -${file.deletions})`
-    ),
   ]
 
   let context = lines.join('\n')
@@ -192,7 +221,7 @@ function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
       continue
     }
 
-    const section = `\ndiff --git a/${file.filename} b/${file.filename}\n${file.patch}`
+    const section = `\n\ndiff --git a/${file.filename} b/${file.filename}\n${file.patch}`
 
     if (estimateTokens(context + section) > maxDiffTokens) {
       break
@@ -202,4 +231,19 @@ function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
   }
 
   return context
+}
+
+async function readPullRequestTemplate(repoRoot: string) {
+  for (const relativePath of PR_TEMPLATE_PATHS) {
+    const contents = await readFile(
+      path.join(repoRoot, relativePath),
+      'utf8'
+    ).catch(() => null)
+
+    if (contents && contents.trim().length > 0) {
+      return contents.trim()
+    }
+  }
+
+  return null
 }

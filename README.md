@@ -69,8 +69,9 @@ gityo-pr-create --web
 
 The base branch defaults to the repository default branch, and the head branch
 defaults to the current branch. gityo generates the title and body from the
-commits and diff between the two branches, using the same `models`,
-`instructions`, and `.gityo.md` config as commits.
+commits and diff between the two branches, using the `models` config. Customize
+each part with `prTitleInstructions` and `prBodyInstructions`, and gityo follows
+the repository's pull request template when one exists.
 
 Create the pull request if needed, then merge it:
 
@@ -197,6 +198,8 @@ Example:
   "postCommand": "push",
   "autoRunPostCommand": false,
   "instructions": "Write short, clear commit messages.",
+  "prTitleInstructions": "Use conventional commit style for the title.",
+  "prBodyInstructions": "Keep the description to two short paragraphs.",
   "maxDiffTokens": 24000,
   "perFileCap": 400
 }
@@ -230,6 +233,16 @@ Style selection priority is `--style`, then config `style`, then `default`.
 
 `instructions` uses the same format. Set it to a string or `{ "path": "..." }`
 to load additional instructions from a file.
+
+### Pull request descriptions
+
+`prTitleInstructions` and `prBodyInstructions` guide the generated PR title and
+body. Each accepts a string or `{ "path": "..." }`.
+
+gityo also looks for a pull request template at `.github/pull_request_template.md`
+and the other standard locations, then asks the model to fill in its sections.
+The generated body explains what the change does and why. It does not list
+changed files or commits, since that list is already on the GitHub Changes tab.
 
 ### Large changes
 

@@ -10,16 +10,17 @@ TITLE RULES:
 
 - Imperative mood, no trailing period, no markdown formatting
 - Describe the overall change, not a single commit
-- Must be specific about the affected areas
+- Be specific about the affected areas
 
 BODY RULES:
 
-- Open with a short paragraph explaining WHAT this pull request does and WHY
-- Add a "## Changes" section with bullet points covering the notable changes
+- Explain what the pull request does and why
+- Do NOT enumerate changed files, commits, or a changelog; reviewers can read the diff on GitHub
+- If a pull request template is provided, follow its structure and fill in each section
+- If no template is provided, open with a short summary paragraph and add only sections that carry real information
 - Mention user-facing behavior, important implementation details, and any breaking or migration notes
 - Base every statement on the provided commits and diff; do NOT invent details
-- Keep it concise and skip a section when there is nothing meaningful to say
-- Do NOT wrap the whole response in a code fence and do NOT add commentary outside the title and body
+- Keep it concise
 
 OUTPUT INSTRUCTION:
-Return ONLY the title, a blank line, and the Markdown body.
+Return ONLY the title, a blank line, and the Markdown body. Do not wrap the whole response in a code fence.

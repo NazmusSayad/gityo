@@ -16,24 +16,24 @@ export async function createPullRequestController(
   headArg: string | undefined,
   options: PrCreateControllerOptions = {}
 ) {
-  const { base, head } = await resolvePrBranches(baseArg, headArg)
-  const { config, languageModel, instructions } = await loadPullRequestContext(
-    options.model
-  )
+  const branches = await resolvePrBranches(baseArg, headArg)
+  const context = await loadPullRequestContext(options.model)
 
   const pullRequest = await createPullRequest({
-    base,
-    head,
-    languageModel,
-    instructions,
-    maxDiffTokens: config.maxDiffTokens,
+    base: branches.base,
+    head: branches.head,
+    languageModel: context.languageModel,
+    titleInstructions: context.titleInstructions,
+    bodyInstructions: context.bodyInstructions,
+    template: context.template,
+    maxDiffTokens: context.config.maxDiffTokens,
     autoAccept: options.yolo ?? false,
   }).catch(async (error: unknown) => {
     if (!options.web) {
       throw error
     }
 
-    const existing = await findPullRequest(base, head)
+    const existing = await findPullRequest(branches.base, branches.head)
 
     if (!existing) {
       throw error
