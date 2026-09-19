@@ -1,6 +1,6 @@
 # gityo
 
-`gityo` writes or generates a commit message for your changes, stages them, and commits. It can then run a post-commit git action.
+`gityo` commits your changes with a message written by an AI model. You review the message, and gityo stages, commits, and offers to push.
 
 ## Install
 
@@ -8,20 +8,15 @@
 npm install -g gityo
 ```
 
-Or run it without installing globally:
+Or run it without a global install:
 
 ```bash
 npx gityo
 ```
 
-## What it does
+gityo needs a model in its config before the first run. See [AI setup](#ai-setup).
 
-- writes or generates a commit message based on your current git state
-- stages everything when nothing is staged yet
-- creates the commit for you
-- can run a post-commit action like `git push`
-
-## Quick use
+## Usage
 
 Run it inside a git repository:
 
@@ -29,34 +24,30 @@ Run it inside a git repository:
 gityo
 ```
 
-Typical flow:
+Here's what happens:
 
-1. Generate a commit message (from staged files if any, otherwise all changes)
-2. Stage everything if nothing is staged
-3. Create the commit
-4. Optionally run the configured post-commit action
+1. gityo reads your changes. If you staged files, it reads only those. Otherwise it reads every change, including untracked files.
+2. The model writes a commit message. You accept it or ask for a new one.
+3. If nothing was staged, gityo runs `git add -A`.
+4. gityo commits.
+5. gityo asks whether to run the post-commit command, which is `git push` by default.
 
-If you already staged files before running `gityo`, only those are used for the message and committed. Your other changes are left alone.
+If you staged some files before running `gityo`, it commits only those and leaves the rest of your changes alone.
 
-## Common commands
+Flags change how much it asks:
 
-```bash
-gityo
-gityo --generate
-gityo --model fast --generate
-gityo --style concise --generate
-gityo --input "fix login redirect bug"
-gityo --yolo
-```
+- `gityo --generate` commits the generated message without asking you to review it.
+- `gityo --input "fix login redirect bug"` commits your own message instead.
+- `gityo --post` runs the post-commit command without asking.
+- `gityo --yolo` does both `--generate` and `--post`. No questions.
+- `gityo --model fast` uses the `fast` model from your config.
+- `gityo --style concise` uses a different message style. See [Commit message styles](#commit-message-styles).
 
 ## Pull requests
 
-gityo also ships two commands for GitHub pull requests. They call the
-[GitHub CLI](https://cli.github.com) (`gh`), so `gh` must be installed and
-authenticated. They do not inspect your local working tree. The pull request
-content comes from the GitHub compare API.
+Two more commands work with GitHub pull requests. Both need the [GitHub CLI](https://cli.github.com) (`gh`) installed and logged in. They read the commits and diff from GitHub's compare API, not from your working tree, so push your branch first.
 
-Create a pull request with an AI-generated title and body:
+`gityo-pr-create` opens a pull request with a generated title and body:
 
 ```bash
 gityo-pr-create
@@ -65,12 +56,9 @@ gityo-pr-create --yolo
 gityo-pr-create --web
 ```
 
-The base branch defaults to the repository default branch, and the head branch
-defaults to the current branch. gityo generates the title and body from the
-commits and diff between the two branches, using the `models` config. Customize
-each part with `prTitleStyle` and `prBodyStyle`.
+With no arguments, the base is the repository's default branch and the head is your current branch. Pass two branch names to set both. `--yolo` creates the pull request without showing you the title and body first. `--web` opens the pull request in your browser afterward. If one already exists for those branches, `--web` opens that one.
 
-Create the pull request if needed, then merge it:
+`gityo-pr-merge` merges a pull request and creates it first if it doesn't exist:
 
 ```bash
 gityo-pr-merge
@@ -78,12 +66,17 @@ gityo-pr-merge main feature/login
 gityo-pr-merge --yolo
 ```
 
-`--yolo` skips the review/merge confirmation, and `--model` picks a model key
-from your config.
+Here `--yolo` skips both the title and body review and the merge confirmation.
+
+Both commands also take `--model`, `--title-style`, and `--body-style`.
+
+The body says what the change does and why. It doesn't list changed files or commits, because GitHub already shows those on the Changes tab.
 
 ## AI setup
 
-A configured model is required. gityo won't run without one, and it must be able to resolve the API key from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; gityo uses the `default` key when you don't pass `--model`:
+gityo won't run without a model, and the model's API key must be set in your environment. This applies even when you pass `--input`.
+
+Put models in the `models` map of your config. Each key is a name you can pass to `--model`. Without `--model`, gityo uses `default`.
 
 ```json
 {
@@ -104,21 +97,21 @@ A configured model is required. gityo won't run without one, and it must be able
 }
 ```
 
-Each model config:
+Each model has these fields:
 
-- `npm`: the provider package, one of 30 supported AI SDK providers (autocompleted by the schema). Optional; defaults to `@ai-sdk/openai-compatible`
-- `apiKeyEnv`: environment variable(s) holding the API key, tried in order
-- `model`: the model ID
-- `apiUrl`: optional base URL (required when `npm` is `@ai-sdk/openai-compatible`)
-- `options`: extra provider options passed to the provider factory
+- `model` is the model ID.
+- `apiKeyEnv` is the environment variable that holds the API key.
+- `npm` is the provider package. It defaults to `@ai-sdk/openai-compatible`.
+- `apiUrl` is the provider's base URL. You need it for `@ai-sdk/openai-compatible`.
+- `options` is passed to the provider's create function, such as `createOpenAI()`.
 
-`apiKeyEnv` accepts a single variable name or an array of names:
+`apiKeyEnv` can also be a list. gityo uses the first variable that's set:
 
 ```json
 "apiKeyEnv": ["GITYO_API_KEY", "OPENROUTER_API_KEY"]
 ```
 
-OpenAI-compatible example without `npm`:
+For any OpenAI-compatible endpoint, leave out `npm` and set `apiUrl`:
 
 ```json
 "local": {
@@ -128,51 +121,35 @@ OpenAI-compatible example without `npm`:
 }
 ```
 
-Then use:
+gityo supports 31 providers, and the schema autocompletes their names in `npm`.
 
-```bash
-gityo --generate
-gityo --model fast --generate
-gityo --style concise --generate
-```
+The Vercel AI SDK packages are `@ai-sdk/openai`, `@ai-sdk/openai-compatible`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/google-vertex`, `@ai-sdk/xai`, `@ai-sdk/azure`, `@ai-sdk/amazon-bedrock`, `@ai-sdk/groq`, `@ai-sdk/mistral`, `@ai-sdk/deepseek`, `@ai-sdk/togetherai`, `@ai-sdk/fireworks`, `@ai-sdk/perplexity`, `@ai-sdk/cohere`, `@ai-sdk/cerebras`, `@ai-sdk/luma`, `@ai-sdk/fal`, and `@ai-sdk/deepinfra`.
 
-Providers are the official Vercel AI SDK packages: `@ai-sdk/openai`, `@ai-sdk/openai-compatible`, `@ai-sdk/anthropic`, `@ai-sdk/google`, `@ai-sdk/xai`, `@ai-sdk/azure`, `@ai-sdk/amazon-bedrock`, `@ai-sdk/groq`, `@ai-sdk/mistral`, `@ai-sdk/deepseek`, `@ai-sdk/togetherai`, `@ai-sdk/fireworks`, `@ai-sdk/perplexity`, `@ai-sdk/cohere`, `@ai-sdk/cerebras`, `@ai-sdk/luma`, `@ai-sdk/fal`, `@ai-sdk/deepinfra`, `@ai-sdk/google-vertex`, `@openrouter/ai-sdk-provider`, plus `ai-sdk-ollama`, `ollama-ai-provider-v2`, `workers-ai-provider`, `zhipu-ai-provider`, `sambanova-ai-provider`, `vercel-minimax-ai-provider`, `@aihubmix/ai-sdk-provider`, `ai-gateway-provider`, `@friendliai/ai-provider`, `@helicone/ai-sdk-provider`, and `ai-sdk-provider-opencode-sdk`.
+The other packages are `@openrouter/ai-sdk-provider`, `ai-sdk-ollama`, `ollama-ai-provider-v2`, `workers-ai-provider`, `zhipu-ai-provider`, `sambanova-ai-provider`, `vercel-minimax-ai-provider`, `@aihubmix/ai-sdk-provider`, `ai-gateway-provider`, `@friendliai/ai-provider`, `@helicone/ai-sdk-provider`, and `ai-sdk-provider-opencode-sdk`.
 
 ## Config
 
-Show where your config files live:
+gityo reads three files. You edit them by hand.
+
+- `~/.config/gityo.json` is your global config.
+- `.gityo.json` in the repository root is the project config. Its keys override the global ones.
+- `.gityo.md` in the repository root holds writing instructions for that project. It replaces the `instructions` key from both JSON files.
+
+The override is shallow. A `models` map in `.gityo.json` replaces your global `models` entirely instead of adding to it. The same goes for `styles`.
+
+To print the config paths, run:
 
 ```bash
 gityo config
 ```
 
-Config is edited by hand in a JSON file. Project config goes in:
-
-```text
-.gityo.json
-```
-
-Global config goes in:
-
-```text
-~/.config/gityo.json
-```
-
-You can also add repo-specific writing instructions in:
-
-```text
-.gityo.md
-```
-
-That file is useful when you want commit messages in a certain tone or format for one project.
-
-Set `$schema` in your config file for editor autocomplete and validation:
+Set `$schema` in your config for autocomplete and validation in your editor:
 
 ```text
 https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json
 ```
 
-Example:
+Here's a config with every key:
 
 ```json
 {
@@ -202,77 +179,14 @@ Example:
 }
 ```
 
-### Commit message styles
+Keys not covered in other sections:
 
-Styles control the base commit-message convention sent to the model. Built-in
-styles are `default`, `concise`, `explanatory`, `plain`, and `gitmoji`.
+- `autoAcceptMessage` commits the generated message without asking, like `--generate`. Defaults to `false`.
+- `postCommand` is `"push"`, `"push-and-pull"`, or `null` to skip it. Defaults to `"push"`.
+- `autoRunPostCommand` runs the post-commit command without asking, like `--post`. Defaults to `false`.
+- `instructions` adds your own guidance to the commit prompt. Use a string or `{ "path": "..." }` to load it from a file.
 
-- `default` uses conventional commits and adds a body only for substantial,
-  multi-part changes that benefit from more context.
-- `concise` uses conventional commits and adds a body only when it is essential.
-- `explanatory` uses conventional commits and encourages a useful explanatory
-  body.
-- `plain` produces a short, non-conventional imperative subject line.
-- `gitmoji` prefixes a conventional subject with a relevant gitmoji.
-
-Choose a default with `style`, or select one for a command with `--style`:
-
-```bash
-gityo --style team --generate
-```
-
-Custom `styles` extend the built-ins. A custom style with the same name replaces
-the built-in style. A style can be inline text or an object with a `path` to a
-prompt file. File paths are passed to Node's `path.resolve()`, so relative paths
-resolve from the directory where you run `gityo`.
-
-Style selection priority is `--style`, then config `style`, then `default`.
-
-`instructions` uses the same format. Set it to a string or `{ "path": "..." }`
-to load additional instructions from a file.
-
-### Pull request styles
-
-PR titles and bodies use their own styles, separate from commit styles. Built-in
-title styles are `default` and `conventional`. Built-in body styles are
-`default`, `concise`, and `verbose`.
-
-- `default` title is a short, specific imperative title.
-- `conventional` title uses the conventional commits format, `type(scope): subject`.
-- `default` body explains what the pull request does and why.
-- `concise` body uses a few short sentences or bullets.
-- `verbose` body goes into detail, with headings when the change has distinct parts.
-
-Set `prTitleStyle` and `prBodyStyle` for defaults, or select one for a command
-with `--title-style` and `--body-style`:
-
-```bash
-gityo-pr-create --title-style conventional --body-style concise
-```
-
-Custom `prTitleStyles` and `prBodyStyles` extend the built-ins. A custom style
-with the same name replaces the built-in style. A style can be inline text or an
-object with a `path` to a prompt file, resolved like commit `styles`.
-
-The generated body explains what the change does and why. It does not list
-changed files or commits, since that list is already on the GitHub Changes tab.
-
-### Large changes
-
-For a small diff, gityo sends it to the model as-is. When the diff is too large for one request, gityo minimizes it first:
-
-- regenerates the diff with minimal context lines
-- drops lock files and minified/generated files from the payload
-- caps each file's patch and lists every changed file with its line counts so the model still sees the full picture
-
-If the minimized diff is still too large, gityo summarizes each remaining part in parallel and generates a final commit message from the summaries.
-
-Two optional config knobs control this:
-
-- `maxDiffTokens`: estimated token budget for the diff sent to the model (default `24000`)
-- `perFileCap`: max diff lines kept per file when minimizing (default `400`)
-
-Example instructions file:
+A `.gityo.md` file looks like this:
 
 ```md
 Use imperative commit messages.
@@ -280,8 +194,56 @@ Mention the user-facing change first.
 Keep the subject line under 72 characters.
 ```
 
-Priority is simple:
+### Commit message styles
 
-- `.gityo.md` for repo-specific instructions
-- `.gityo.json` for project config
-- `~/.config/gityo.json` for your defaults
+A style is the base commit convention gityo asks the model to follow. There are five built in:
+
+- `default` uses conventional commits. It adds a body only for large changes with several parts.
+- `concise` uses conventional commits and adds a body only when the subject can't carry the change alone.
+- `explanatory` uses conventional commits and usually adds a body explaining the change.
+- `plain` writes one short imperative subject line with no conventional prefix.
+- `gitmoji` puts a gitmoji in front of a conventional subject.
+
+gityo picks the style from `--style`, then the `style` key, then falls back to `default`:
+
+```bash
+gityo --style team --generate
+```
+
+Add your own under `styles`. A style is either inline text or `{ "path": "..." }` pointing to a prompt file. If you name one after a built-in, yours replaces it. gityo resolves `path` from the directory you run it in, not from the config file's location.
+
+### Pull request styles
+
+Pull request titles and bodies have their own styles.
+
+Title styles:
+
+- `default` is a short, specific imperative title.
+- `conventional` uses the conventional commits format, `type(scope): subject`.
+
+Body styles:
+
+- `default` explains what the pull request does and why.
+- `concise` uses a few short sentences or bullets.
+- `verbose` goes into detail and adds headings when the change has separate parts.
+
+Set defaults with `prTitleStyle` and `prBodyStyle`, or pick per run:
+
+```bash
+gityo-pr-create --title-style conventional --body-style concise
+```
+
+Custom styles go under `prTitleStyles` and `prBodyStyles`. They work like commit `styles`.
+
+### Large changes
+
+gityo sends the whole diff when it fits in `maxDiffTokens`, which defaults to 24000. gityo estimates tokens as 4 characters each.
+
+When the diff is too big, gityo shrinks it:
+
+- It regenerates the diff with 1 line of context instead of 3.
+- It drops lock files, minified JS and CSS, and source maps.
+- It cuts each file's patch to `perFileCap` lines, which defaults to 400.
+- It adds a list of every changed file with its line counts, so the model still knows what the whole change touches.
+
+If the diff still doesn't fit, gityo splits it into chunks and summarizes three at a time. The model then writes the commit message from those summaries. Expect a very large commit to take a few extra requests.
