@@ -14,11 +14,11 @@
     "lint:fix": "eslint . --fix",
     "build": "tsdown --config ./tsdown.config.ts",
     "dev": "tsdown --config ./tsdown.config.ts --watch",
-    "start": "node --watch ./dist/index.js",
+    "start": "node --watch ./dist/commit.js",
     "json": "tsx ./src/json.ts"
   },
   "bin": {
-    "gityo": "dist/index.js"
+    "gityo": "dist/commit.js"
   },
   "devDependencies": {
     "@ai-sdk/amazon-bedrock": "^5.0.40",

@@ -4,7 +4,7 @@ import packageJSON from './package.json' with { type: 'json' }
 
 export default defineConfig({
   entry: {
-    index: './src/index.ts',
+    commit: './src/commit.ts',
   },
 
   format: 'es',
