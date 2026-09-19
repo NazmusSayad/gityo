@@ -87,10 +87,6 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   if (finalCommitMessage.length === 0) {
     while (true) {
-      if (forceLLMGenerate) {
-        console.log(chalk.yellow('• Using LLM to generate message'))
-      }
-
       const commitMessage = await runWithLoading(
         'Generating commit message',
         () =>

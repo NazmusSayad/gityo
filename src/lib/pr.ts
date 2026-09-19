@@ -152,10 +152,6 @@ export async function createPullRequest(
   let draft = ''
 
   while (true) {
-    if (options.autoAccept) {
-      console.log(chalk.yellow('• Using LLM to generate pull request'))
-    }
-
     draft = await runWithLoading('Generating pull request title and body', () =>
       generatePullRequest({
         languageModel: options.languageModel,
