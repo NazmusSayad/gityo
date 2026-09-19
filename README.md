@@ -1,8 +1,8 @@
 # gityo
 
-`gityo` is a CLI that writes or generates a commit message for your changes, stages them, creates the commit, and optionally runs a post-commit git action.
+`gityo` writes or generates a commit message for your changes, stages them, and commits. It can then run a post-commit git action.
 
-It is built for people who want a faster commit flow without turning git into a wall of commands.
+It replaces the usual sequence of git commands with a single command.
 
 ## Install
 
@@ -38,7 +38,7 @@ Typical flow:
 3. Create the commit
 4. Optionally run the configured post-commit action
 
-If you already staged files before running `gityo`, only those are used for the message and committed — your other changes are left alone.
+If you already staged files before running `gityo`, only those are used for the message and committed. Your other changes are left alone.
 
 ## Common commands
 
@@ -53,9 +53,9 @@ gityo --yolo
 
 ## Pull requests
 
-Two extra commands are installed for GitHub pull requests. They shell out to the
+gityo also ships two commands for GitHub pull requests. They call the
 [GitHub CLI](https://cli.github.com) (`gh`), so `gh` must be installed and
-authenticated. They do not inspect your local working tree; the pull request
+authenticated. They do not inspect your local working tree. The pull request
 content comes from the GitHub compare API.
 
 Create a pull request with an AI-generated title and body:
@@ -67,8 +67,8 @@ gityo-pr-create --yolo
 gityo-pr-create --web
 ```
 
-The base branch defaults to the repository default branch and the head branch
-defaults to the current branch. The title and body are generated from the
+The base branch defaults to the repository default branch, and the head branch
+defaults to the current branch. gityo generates the title and body from the
 commits and diff between the two branches, using the same `models`,
 `instructions`, and `.gityo.md` config as commits.
 
@@ -85,7 +85,7 @@ from your config.
 
 ## AI setup
 
-A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
+A configured model is required. gityo won't run without one, and it must be able to resolve the API key from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; gityo uses the `default` key when you don't pass `--model`:
 
 ```json
 {
@@ -108,11 +108,11 @@ A configured model is required — gityo won't run without one, and the API key 
 
 Each model config:
 
-- `npm` — the provider package, one of 30 supported AI SDK providers (autocompleted by the schema). Optional; defaults to `@ai-sdk/openai-compatible`
-- `apiKeyEnv` — environment variable(s) holding the API key, tried in order
-- `model` — the model ID
-- `apiUrl` — optional base URL (required when `npm` is `@ai-sdk/openai-compatible`)
-- `options` — extra provider options passed to the provider factory
+- `npm`: the provider package, one of 30 supported AI SDK providers (autocompleted by the schema). Optional; defaults to `@ai-sdk/openai-compatible`
+- `apiKeyEnv`: environment variable(s) holding the API key, tried in order
+- `model`: the model ID
+- `apiUrl`: optional base URL (required when `npm` is `@ai-sdk/openai-compatible`)
+- `options`: extra provider options passed to the provider factory
 
 `apiKeyEnv` accepts a single variable name or an array of names:
 
@@ -233,18 +233,18 @@ to load additional instructions from a file.
 
 ### Large changes
 
-When the diff is small, it is sent to the model as-is. When it is too large for one request, gityo minimizes it first:
+For a small diff, gityo sends it to the model as-is. When the diff is too large for one request, gityo minimizes it first:
 
 - regenerates the diff with minimal context lines
 - drops lock files and minified/generated files from the payload
 - caps each file's patch and lists every changed file with its line counts so the model still sees the full picture
 
-If the minimized diff is still too large, each remaining part is summarized in parallel and a final commit message is generated from those summaries.
+If the minimized diff is still too large, gityo summarizes each remaining part in parallel and generates a final commit message from the summaries.
 
 Two optional config knobs control this:
 
-- `maxDiffTokens` — estimated token budget for the diff sent to the model (default `24000`)
-- `perFileCap` — max diff lines kept per file when minimizing (default `400`)
+- `maxDiffTokens`: estimated token budget for the diff sent to the model (default `24000`)
+- `perFileCap`: max diff lines kept per file when minimizing (default `400`)
 
 Example instructions file:
 
