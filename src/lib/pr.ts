@@ -10,7 +10,7 @@ import {
   type PullRequest,
 } from './gh'
 import { resolveLanguageModel, resolveModelConfig } from './llm/model'
-import { generatePullRequest, type PullRequestDraft } from './llm/pr'
+import { generatePullRequest } from './llm/pr'
 import { resolveInstructionContent } from './llm/style'
 import { loadConfig } from './load-config'
 import { acceptGeneratedPullRequest } from './prompts'
@@ -60,6 +60,11 @@ export type CreatePullRequestOptions = {
   autoAccept?: boolean
 }
 
+type PullRequestContent = {
+  title: string
+  body: string
+}
+
 export async function loadPullRequestContext(modelKey?: string) {
   const repoRoot = await getRepoRoot()
   const config = await loadConfig(repoRoot)
@@ -97,14 +102,15 @@ export async function createPullRequest(
     draft = await generateDraft(options, context)
   }
 
-  if (draft.title.length === 0) {
+  const content = parsePullRequestContent(draft)
+  if (content.title.length === 0) {
     throw new Error('The selected model returned an empty pull request title.')
   }
 
   console.log(chalk.green('✓ Creating pull request'))
   const output = await createPullRequestApi({
-    title: draft.title,
-    body: draft.body,
+    title: content.title,
+    body: content.body,
     base: options.base,
     head: options.head,
   })
@@ -118,20 +124,32 @@ export async function createPullRequest(
 function generateDraft(
   options: CreatePullRequestOptions,
   context: string
-): Promise<PullRequestDraft> {
+): Promise<string> {
   return runWithLoading('Generating pull request title and body', () =>
     generatePullRequest(options.languageModel, options.instructions, context)
   )
 }
 
-function printDraft(draft: PullRequestDraft) {
-  console.log(chalk.cyan.bold(draft.title))
+function parsePullRequestContent(text: string): PullRequestContent {
+  const lines = text.trim().split('\n')
 
-  if (draft.body.length > 0) {
-    console.log('')
-    console.log(chalk.cyan.dim(draft.body))
+  return {
+    title: cleanTitle(lines[0]),
+    body: lines.slice(1).join('\n').trim(),
   }
+}
 
+function cleanTitle(line: string) {
+  return line
+    .trim()
+    .replace(/^#{1,6}\s*/, '')
+    .replace(/^(\*\*|__|\*|_|`)+/, '')
+    .replace(/(\*\*|__|\*|_|`)+$/, '')
+    .trim()
+}
+
+function printDraft(draft: string) {
+  console.log(chalk.cyan.dim(draft))
   console.log('')
 }
 
