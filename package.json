@@ -12,10 +12,9 @@
     "typecheck:watch": "tsc --noEmit --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "json": "tsx ./src/json.ts",
     "build": "tsdown --config ./tsdown.config.ts",
-    "dev": "tsdown --config ./tsdown.config.ts --watch",
-    "start": "node --watch ./dist/commit.js",
-    "json": "tsx ./src/json.ts"
+    "dev": "tsdown --config ./tsdown.config.ts --watch"
   },
   "bin": {
     "gityo": "dist/commit.js",
