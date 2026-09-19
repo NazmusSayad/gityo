@@ -5,6 +5,7 @@ import {
   loadPullRequestContext,
   resolvePrBranches,
 } from '../lib/pr'
+import { handleUncommittedChanges } from './local-changes'
 
 export type PrCreateControllerOptions = {
   model?: string
@@ -27,6 +28,10 @@ export async function createPullRequestController(
   const systemPrompt = buildPullRequestSystemPrompt(context)
 
   const branches = await resolvePrBranches(baseArg, headArg)
+
+  await handleUncommittedChanges(branches.head, {
+    yolo: options.yolo ?? false,
+  })
 
   const pullRequest = await createPullRequest({
     base: branches.base,

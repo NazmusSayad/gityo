@@ -32,6 +32,7 @@ type MainControllerOptions = {
   style?: string
   post?: boolean
   yolo?: boolean
+  push?: boolean
 }
 
 const MAP_CONCURRENCY = 3
@@ -143,21 +144,25 @@ export async function mainController(options: MainControllerOptions = {}) {
   await liveGit.commit(finalCommitMessage)
   console.log('')
 
-  if (!config.postCommand) {
+  if (!config.postCommand && !options.push) {
     return
   }
 
-  if (forceExecPostCommand || config.autoRunPostCommand) {
-    console.log(chalk.yellow(`✓ Executing: ${config.postCommand}`))
-  } else {
-    const shouldRunPostCommand = await confirm({
-      message: `Run post command: ${config.postCommand}?`,
-      default: true,
-      theme: selectionTheme,
-    })
-    if (!shouldRunPostCommand) {
-      return
+  if (config.postCommand) {
+    if (forceExecPostCommand || config.autoRunPostCommand) {
+      console.log(chalk.yellow(`✓ Executing: ${config.postCommand}`))
+    } else {
+      const shouldRunPostCommand = await confirm({
+        message: `Run post command: ${config.postCommand}?`,
+        default: true,
+        theme: selectionTheme,
+      })
+      if (!shouldRunPostCommand) {
+        return
+      }
     }
+  } else {
+    console.log(chalk.yellow('✓ Pushing changes'))
   }
 
   await liveGit.push()
