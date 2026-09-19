@@ -1,3 +1,4 @@
+import chalk from 'chalk'
 import { findPullRequest, mergePullRequest } from '../lib/gh'
 import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
 import {
@@ -43,9 +44,11 @@ export async function mergePullRequestController(
     })
   }
 
-  if (!options.yolo) {
-    console.log('')
+  console.log('')
 
+  if (options.yolo) {
+    console.log(chalk.yellow(`✓ Merging pull request #${pullRequest.number}`))
+  } else {
     const confirmed = await confirmPullRequestMerge(
       `${branches.base} <- ${branches.head}`
     )
