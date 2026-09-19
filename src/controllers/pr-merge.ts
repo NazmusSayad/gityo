@@ -44,6 +44,8 @@ export async function mergePullRequestController(
   }
 
   if (!options.yolo) {
+    console.log('')
+
     const confirmed = await confirmPullRequestMerge(
       `${branches.base} <- ${branches.head}`
     )
