@@ -119,7 +119,7 @@ export async function mainController(options: MainControllerOptions = {}) {
       }
 
       const action = await acceptGenerated(
-        'Accept generated commit message',
+        'Accept generated commit message?',
         'generate a new commit message'
       )
       if (action) break
