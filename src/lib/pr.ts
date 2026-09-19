@@ -1,4 +1,5 @@
 import type { LanguageModel } from 'ai'
+import chalk from 'chalk'
 import { createRenderer } from 'markdansi'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -148,22 +149,11 @@ export async function createPullRequest(
   }
 
   const context = buildCompareContext(compare, maxDiffTokens)
-  let draft = await runWithLoading(
-    'Generating pull request title and body',
-    () =>
-      generatePullRequest({
-        languageModel: options.languageModel,
-        systemPrompt: options.systemPrompt,
-        context,
-      })
-  )
+  let draft = ''
 
   while (true) {
-    console.log(renderPullRequest(draft).trim())
-    console.log('')
-
-    if (options.autoAccept || (await acceptGeneratedPullRequest())) {
-      break
+    if (options.autoAccept) {
+      console.log(chalk.yellow('• Using LLM to generate pull request'))
     }
 
     draft = await runWithLoading('Generating pull request title and body', () =>
@@ -173,11 +163,22 @@ export async function createPullRequest(
         context,
       })
     )
+
+    console.log(renderPullRequest(draft).trim())
+    console.log('')
+
+    if (options.autoAccept || (await acceptGeneratedPullRequest())) {
+      break
+    }
   }
 
   const content = parsePullRequestContent(draft)
   if (content.title.length === 0) {
     throw new Error('The selected model returned an empty pull request title.')
+  }
+
+  if (options.autoAccept) {
+    console.log(chalk.green('✓ Creating pull request'))
   }
 
   const output = await createPullRequestApi({
