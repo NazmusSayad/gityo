@@ -5,6 +5,8 @@ import packageJSON from './package.json' with { type: 'json' }
 export default defineConfig({
   entry: {
     commit: './src/commit.ts',
+    'pr-create': './src/pr-create.ts',
+    'pr-merge': './src/pr-merge.ts',
   },
 
   format: 'es',

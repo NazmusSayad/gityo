@@ -14,7 +14,7 @@ import {
   generateCommitMessageFromSummaries,
   summarizeChanges,
 } from '../lib/llm/message'
-import { resolveLanguageModel } from '../lib/llm/model'
+import { resolveLanguageModel, resolveModelConfig } from '../lib/llm/model'
 import {
   getStyleKeys,
   resolveInstructionContent,
@@ -49,17 +49,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   )
 
   const modelKey = options.model ?? 'default'
-  const modelConfig = config.models?.[modelKey]
-
-  if (!modelConfig) {
-    const availableModels = Object.keys(config.models ?? {}).join(', ')
-    const hint =
-      availableModels.length === 0
-        ? 'No models configured. Edit your config file to add a model — run `gityo config` to see where.'
-        : `Model '${modelKey}' is not configured. Available models: ${availableModels}.`
-
-    throw new Error(hint)
-  }
+  const modelConfig = resolveModelConfig(config.models, modelKey)
 
   const languageModel = resolveLanguageModel(modelConfig)
 

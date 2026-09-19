@@ -51,6 +51,38 @@ gityo --input "fix login redirect bug"
 gityo --yolo
 ```
 
+## Pull requests
+
+Two extra commands are installed for GitHub pull requests. They shell out to the
+[GitHub CLI](https://cli.github.com) (`gh`), so `gh` must be installed and
+authenticated. They do not inspect your local working tree; the pull request
+content comes from the GitHub compare API.
+
+Create a pull request with an AI-generated title and body:
+
+```bash
+gityo-pr-create
+gityo-pr-create main feature/login
+gityo-pr-create --yolo
+gityo-pr-create --web
+```
+
+The base branch defaults to the repository default branch and the head branch
+defaults to the current branch. The title and body are generated from the
+commits and diff between the two branches, using the same `models`,
+`instructions`, and `.gityo.md` config as commits.
+
+Create the pull request if needed, then merge it:
+
+```bash
+gityo-pr-merge
+gityo-pr-merge main feature/login
+gityo-pr-merge --yolo
+```
+
+`--yolo` skips the review/merge confirmation, and `--model` picks a model key
+from your config.
+
 ## AI setup
 
 A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:

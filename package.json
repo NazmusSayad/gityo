@@ -18,7 +18,9 @@
     "json": "tsx ./src/json.ts"
   },
   "bin": {
-    "gityo": "dist/commit.js"
+    "gityo": "dist/commit.js",
+    "gityo-pr-create": "dist/pr-create.js",
+    "gityo-pr-merge": "dist/pr-merge.js"
   },
   "devDependencies": {
     "@ai-sdk/amazon-bedrock": "^5.0.40",
