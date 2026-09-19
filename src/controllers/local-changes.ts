@@ -45,8 +45,6 @@ export async function handleUncommittedChanges(
       console.log('')
       return
     }
-  } else {
-    console.log(chalk.yellow('✓ Committing and pushing local changes'))
   }
 
   await mainController({ yolo: options.yolo, push: true })
