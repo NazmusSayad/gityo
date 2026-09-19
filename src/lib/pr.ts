@@ -1,5 +1,4 @@
 import type { LanguageModel } from 'ai'
-import chalk from 'chalk'
 import { createRenderer } from 'markdansi'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -181,7 +180,6 @@ export async function createPullRequest(
     throw new Error('The selected model returned an empty pull request title.')
   }
 
-  console.log(chalk.green('✓ Creating pull request'))
   const output = await createPullRequestApi({
     title: content.title,
     body: content.body,
