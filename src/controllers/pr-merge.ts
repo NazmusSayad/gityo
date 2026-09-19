@@ -56,7 +56,7 @@ export async function mergePullRequestController(
     console.log(chalk.yellow(`✓ Merging pull request #${pullRequest.number}`))
   } else {
     const confirmed = await confirm({
-      message: `Merge PR ${chalk.cyan.bold(`#${pullRequest.number}`)}: ${chalk.red.bold(branches.base)} ${chalk.reset('←')} ${chalk.yellow.bold(branches.head)}`,
+      message: `Merge PR #${pullRequest.number}: ${chalk.red.bold(branches.base)} ${chalk.reset('←')} ${chalk.yellow.bold(branches.head)}`,
       default: true,
       theme: mergeTheme,
     })
