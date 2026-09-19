@@ -27,8 +27,8 @@ export async function mergePullRequestController(
     titleStyle: options.titleStyle,
     bodyStyle: options.bodyStyle,
   })
-  const systemPrompt = buildPullRequestSystemPrompt(context)
 
+  const systemPrompt = buildPullRequestSystemPrompt(context)
   const branches = await resolvePrBranches(baseArg, headArg)
 
   await handleUncommittedChanges(branches.head, {
