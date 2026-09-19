@@ -3,6 +3,29 @@ import { z } from 'zod'
 import { modelSchema } from '../../schema'
 import { SUPPORTED_PROVIDERS } from './ai-sdk'
 
+export function resolveModelConfig(
+  models: Record<string, z.infer<typeof modelSchema>> | undefined,
+  modelKey: string
+) {
+  const modelConfig = models?.[modelKey]
+
+  if (modelConfig) {
+    return modelConfig
+  }
+
+  const availableModels = Object.keys(models ?? {}).join(', ')
+
+  if (availableModels.length === 0) {
+    throw new Error(
+      'No models configured. Edit your config file to add a model — run `gityo config` to see where.'
+    )
+  }
+
+  throw new Error(
+    `Model '${modelKey}' is not configured. Available models: ${availableModels}.`
+  )
+}
+
 export function resolveLanguageModel(
   modelConfig: z.infer<typeof modelSchema>
 ): LanguageModel {

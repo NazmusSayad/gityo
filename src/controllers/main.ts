@@ -14,7 +14,7 @@ import {
   generateCommitMessageFromSummaries,
   summarizeChanges,
 } from '../lib/llm/message'
-import { resolveLanguageModel } from '../lib/llm/model'
+import { resolveLanguageModel, resolveModelConfig } from '../lib/llm/model'
 import {
   getStyleKeys,
   resolveInstructionContent,
@@ -23,7 +23,6 @@ import {
 import { loadConfig } from '../lib/load-config'
 import {
   acceptGeneratedCommitMessage,
-  promptForCommitMessageInput,
   promptForPostCommand,
 } from '../lib/prompts'
 import { runWithLoading } from '../lib/run-with-loading'
@@ -49,17 +48,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   )
 
   const modelKey = options.model ?? 'default'
-  const modelConfig = config.models?.[modelKey]
-
-  if (!modelConfig) {
-    const availableModels = Object.keys(config.models ?? {}).join(', ')
-    const hint =
-      availableModels.length === 0
-        ? 'No models configured. Edit your config file to add a model — run `gityo config` to see where.'
-        : `Model '${modelKey}' is not configured. Available models: ${availableModels}.`
-
-    throw new Error(hint)
-  }
+  const modelConfig = resolveModelConfig(config.models, modelKey)
 
   const languageModel = resolveLanguageModel(modelConfig)
 
@@ -95,15 +84,6 @@ export async function mainController(options: MainControllerOptions = {}) {
     console.log(chalk.yellow('✓ Using direct commit message'))
     console.log(chalk.cyan.dim(finalCommitMessage))
     console.log('')
-  }
-
-  if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
-    finalCommitMessage = await promptForCommitMessageInput(modelConfig.model)
-    if (finalCommitMessage.length > 0) {
-      console.log(chalk.yellow('✓ Using manual commit message'))
-      console.log(chalk.cyan.dim(finalCommitMessage))
-      console.log('')
-    }
   }
 
   if (finalCommitMessage.length === 0) {

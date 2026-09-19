@@ -1,4 +1,3 @@
-import { createPrompt, isEnterKey, useKeypress, useState } from '@inquirer/core'
 import { confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
 
@@ -14,46 +13,23 @@ const selectionTheme = {
   },
 }
 
-type CommitMessageInputConfig = {
-  message: string
-  required?: boolean
+export function acceptGeneratedCommitMessage() {
+  return acceptGenerated(
+    'generated commit message',
+    'generate a new commit message'
+  )
 }
 
-const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
-  (config, done) => {
-    const [status, setStatus] = useState<'idle' | 'done'>('idle')
-    const [value, setValue] = useState('')
-    const inputPrefix = chalk.dim('❯ ')
+export function acceptGeneratedPullRequest() {
+  return acceptGenerated(
+    'generated pull request',
+    'generate a new pull request'
+  )
+}
 
-    useKeypress((key, readline) => {
-      if (!isEnterKey(key)) {
-        setValue(readline.line)
-        return
-      }
-
-      const answer = value
-
-      if (config.required && answer.trim().length === 0) {
-        return
-      }
-
-      setStatus('done')
-      setValue(answer)
-      done(answer)
-    })
-
-    const prefix = status === 'done' ? chalk.green('✓') : chalk.blue('?')
-    const messageColor = status === 'done' ? chalk.green : chalk.blue
-    const header = `${prefix} ${messageColor(config.message)}`
-
-    if (status === 'done') return header
-    return `${header}\n${inputPrefix}${value}`
-  }
-)
-
-export async function acceptGeneratedCommitMessage() {
+async function acceptGenerated(subject: string, regenerateHint: string) {
   const value = await input({
-    message: `${'Accept generated commit message?'} ${chalk.reset.dim('[Y/r]')}`,
+    message: `Accept ${subject}? ${chalk.reset.dim('[Y/r]')}`,
     theme: selectionTheme,
     validate: (v) => {
       const normalized = v.trim()
@@ -66,7 +42,7 @@ export async function acceptGeneratedCommitMessage() {
         return true
       }
 
-      return 'Press Enter for yes, or type r to generate a new commit message.'
+      return `Press Enter for yes, or type r to ${regenerateHint}.`
     },
   })
 
@@ -79,18 +55,17 @@ export async function acceptGeneratedCommitMessage() {
   return false
 }
 
-export async function promptForCommitMessageInput(model: string) {
-  const message = await commitMessageInputPrompt({
-    required: false,
-    message: `Commit message ${chalk.reset.dim(`(⏎ submit • ${model})`)}`,
-  })
-
-  return message.trim()
-}
-
 export async function promptForPostCommand(commandLabel: string) {
   return confirm({
     message: `Run post command: ${commandLabel}?`,
+    default: true,
+    theme: selectionTheme,
+  })
+}
+
+export function confirmPullRequestMerge(description: string) {
+  return confirm({
+    message: `Merge pull request ${description}?`,
     default: true,
     theme: selectionTheme,
   })

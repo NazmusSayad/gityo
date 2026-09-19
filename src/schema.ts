@@ -30,6 +30,11 @@ export const configSchema = z
     style: z.string().min(1),
     styles: z.record(z.string().min(1), instructionSchema),
 
+    prTitleStyle: z.string().min(1),
+    prBodyStyle: z.string().min(1),
+    prTitleStyles: z.record(z.string().min(1), instructionSchema),
+    prBodyStyles: z.record(z.string().min(1), instructionSchema),
+
     maxDiffTokens: z.number().int().min(1000),
     perFileCap: z.number().int().min(50),
 
@@ -48,6 +53,11 @@ export function resolveConfig(input: unknown) {
     style: parsed.style,
     styles: parsed.styles,
     instructions: parsed.instructions,
+
+    prTitleStyle: parsed.prTitleStyle,
+    prBodyStyle: parsed.prBodyStyle,
+    prTitleStyles: parsed.prTitleStyles,
+    prBodyStyles: parsed.prBodyStyles,
 
     maxDiffTokens: parsed.maxDiffTokens,
     perFileCap: parsed.perFileCap,

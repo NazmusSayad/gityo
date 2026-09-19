@@ -1,8 +1,6 @@
 # gityo
 
-`gityo` is a CLI that writes or generates a commit message for your changes, stages them, creates the commit, and optionally runs a post-commit git action.
-
-It is built for people who want a faster commit flow without turning git into a wall of commands.
+`gityo` writes or generates a commit message for your changes, stages them, and commits. It can then run a post-commit git action.
 
 ## Install
 
@@ -33,12 +31,12 @@ gityo
 
 Typical flow:
 
-1. Write a commit message or generate one (from staged files if any, otherwise all changes)
+1. Generate a commit message (from staged files if any, otherwise all changes)
 2. Stage everything if nothing is staged
 3. Create the commit
 4. Optionally run the configured post-commit action
 
-If you already staged files before running `gityo`, only those are used for the message and committed — your other changes are left alone.
+If you already staged files before running `gityo`, only those are used for the message and committed. Your other changes are left alone.
 
 ## Common commands
 
@@ -51,9 +49,41 @@ gityo --input "fix login redirect bug"
 gityo --yolo
 ```
 
+## Pull requests
+
+gityo also ships two commands for GitHub pull requests. They call the
+[GitHub CLI](https://cli.github.com) (`gh`), so `gh` must be installed and
+authenticated. They do not inspect your local working tree. The pull request
+content comes from the GitHub compare API.
+
+Create a pull request with an AI-generated title and body:
+
+```bash
+gityo-pr-create
+gityo-pr-create main feature/login
+gityo-pr-create --yolo
+gityo-pr-create --web
+```
+
+The base branch defaults to the repository default branch, and the head branch
+defaults to the current branch. gityo generates the title and body from the
+commits and diff between the two branches, using the `models` config. Customize
+each part with `prTitleStyle` and `prBodyStyle`.
+
+Create the pull request if needed, then merge it:
+
+```bash
+gityo-pr-merge
+gityo-pr-merge main feature/login
+gityo-pr-merge --yolo
+```
+
+`--yolo` skips the review/merge confirmation, and `--model` picks a model key
+from your config.
+
 ## AI setup
 
-A configured model is required — gityo won't run without one, and the API key must be resolvable from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; the `default` key is used when you don't pass `--model`:
+A configured model is required. gityo won't run without one, and it must be able to resolve the API key from your environment even when you pass `--input`. Models live in a `models` map in your config file. Each key is a name you can pick with `--model`; gityo uses the `default` key when you don't pass `--model`:
 
 ```json
 {
@@ -76,11 +106,11 @@ A configured model is required — gityo won't run without one, and the API key 
 
 Each model config:
 
-- `npm` — the provider package, one of 30 supported AI SDK providers (autocompleted by the schema). Optional; defaults to `@ai-sdk/openai-compatible`
-- `apiKeyEnv` — environment variable(s) holding the API key, tried in order
-- `model` — the model ID
-- `apiUrl` — optional base URL (required when `npm` is `@ai-sdk/openai-compatible`)
-- `options` — extra provider options passed to the provider factory
+- `npm`: the provider package, one of 30 supported AI SDK providers (autocompleted by the schema). Optional; defaults to `@ai-sdk/openai-compatible`
+- `apiKeyEnv`: environment variable(s) holding the API key, tried in order
+- `model`: the model ID
+- `apiUrl`: optional base URL (required when `npm` is `@ai-sdk/openai-compatible`)
+- `options`: extra provider options passed to the provider factory
 
 `apiKeyEnv` accepts a single variable name or an array of names:
 
@@ -165,6 +195,8 @@ Example:
   "postCommand": "push",
   "autoRunPostCommand": false,
   "instructions": "Write short, clear commit messages.",
+  "prTitleStyle": "conventional",
+  "prBodyStyle": "concise",
   "maxDiffTokens": 24000,
   "perFileCap": 400
 }
@@ -199,20 +231,46 @@ Style selection priority is `--style`, then config `style`, then `default`.
 `instructions` uses the same format. Set it to a string or `{ "path": "..." }`
 to load additional instructions from a file.
 
+### Pull request styles
+
+PR titles and bodies use their own styles, separate from commit styles. Built-in
+title styles are `default` and `conventional`. Built-in body styles are
+`default`, `concise`, and `verbose`.
+
+- `default` title is a short, specific imperative title.
+- `conventional` title uses the conventional commits format, `type(scope): subject`.
+- `default` body explains what the pull request does and why.
+- `concise` body uses a few short sentences or bullets.
+- `verbose` body goes into detail, with headings when the change has distinct parts.
+
+Set `prTitleStyle` and `prBodyStyle` for defaults, or select one for a command
+with `--title-style` and `--body-style`:
+
+```bash
+gityo-pr-create --title-style conventional --body-style concise
+```
+
+Custom `prTitleStyles` and `prBodyStyles` extend the built-ins. A custom style
+with the same name replaces the built-in style. A style can be inline text or an
+object with a `path` to a prompt file, resolved like commit `styles`.
+
+The generated body explains what the change does and why. It does not list
+changed files or commits, since that list is already on the GitHub Changes tab.
+
 ### Large changes
 
-When the diff is small, it is sent to the model as-is. When it is too large for one request, gityo minimizes it first:
+For a small diff, gityo sends it to the model as-is. When the diff is too large for one request, gityo minimizes it first:
 
 - regenerates the diff with minimal context lines
 - drops lock files and minified/generated files from the payload
 - caps each file's patch and lists every changed file with its line counts so the model still sees the full picture
 
-If the minimized diff is still too large, each remaining part is summarized in parallel and a final commit message is generated from those summaries.
+If the minimized diff is still too large, gityo summarizes each remaining part in parallel and generates a final commit message from the summaries.
 
 Two optional config knobs control this:
 
-- `maxDiffTokens` — estimated token budget for the diff sent to the model (default `24000`)
-- `perFileCap` — max diff lines kept per file when minimizing (default `400`)
+- `maxDiffTokens`: estimated token budget for the diff sent to the model (default `24000`)
+- `perFileCap`: max diff lines kept per file when minimizing (default `400`)
 
 Example instructions file:
 
