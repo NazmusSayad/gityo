@@ -8,6 +8,7 @@ import {
   resolvePrBranches,
 } from '../lib/pr'
 import { selectionTheme } from '../lib/prompts'
+import { handleUncommittedChanges } from './local-changes'
 
 export type PrMergeControllerOptions = {
   model?: string
@@ -29,6 +30,10 @@ export async function mergePullRequestController(
   const systemPrompt = buildPullRequestSystemPrompt(context)
 
   const branches = await resolvePrBranches(baseArg, headArg)
+
+  await handleUncommittedChanges(branches.head, {
+    yolo: options.yolo ?? false,
+  })
 
   let pullRequest = await findPullRequest(branches.base, branches.head)
 
