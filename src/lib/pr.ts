@@ -90,19 +90,27 @@ export async function createPullRequest(
   }
 
   const context = buildCompareContext(compare, maxDiffTokens)
-  let draft = await generateDraft(options, context)
+  let draft = await runWithLoading(
+    'Generating pull request title and body',
+    () =>
+      generatePullRequest(options.languageModel, options.instructions, context)
+  )
 
   while (true) {
-    printDraft(draft)
+    console.log(chalk.cyan.dim(draft))
+    console.log('')
 
     if (options.autoAccept || (await acceptGeneratedPullRequest())) {
       break
     }
 
-    draft = await generateDraft(options, context)
+    draft = await runWithLoading('Generating pull request title and body', () =>
+      generatePullRequest(options.languageModel, options.instructions, context)
+    )
   }
 
   const content = parsePullRequestContent(draft)
+
   if (content.title.length === 0) {
     throw new Error('The selected model returned an empty pull request title.')
   }
@@ -121,15 +129,6 @@ export async function createPullRequest(
   return pullRequest
 }
 
-function generateDraft(
-  options: CreatePullRequestOptions,
-  context: string
-): Promise<string> {
-  return runWithLoading('Generating pull request title and body', () =>
-    generatePullRequest(options.languageModel, options.instructions, context)
-  )
-}
-
 function parsePullRequestContent(text: string): PullRequestContent {
   const lines = text.trim().split('\n')
 
@@ -146,11 +145,6 @@ function cleanTitle(line: string) {
     .replace(/^(\*\*|__|\*|_|`)+/, '')
     .replace(/(\*\*|__|\*|_|`)+$/, '')
     .trim()
-}
-
-function printDraft(draft: string) {
-  console.log(chalk.cyan.dim(draft))
-  console.log('')
 }
 
 async function resolveCreatedPullRequest(
