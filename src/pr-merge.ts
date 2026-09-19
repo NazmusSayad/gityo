@@ -23,6 +23,14 @@ const app = new Command()
     'Model key from config to use (defaults to "default").'
   )
   .option(
+    '-t, --title-style <style>',
+    'Title style key to use (defaults to "default").'
+  )
+  .option(
+    '-b, --body-style <style>',
+    'Body style key to use (defaults to "default").'
+  )
+  .option(
     '-y, --yolo',
     'Merge the pull request without asking for confirmation.'
   )

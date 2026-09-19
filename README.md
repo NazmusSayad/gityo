@@ -70,8 +70,8 @@ gityo-pr-create --web
 The base branch defaults to the repository default branch, and the head branch
 defaults to the current branch. gityo generates the title and body from the
 commits and diff between the two branches, using the `models` config. Customize
-each part with `prTitleInstructions` and `prBodyInstructions`, and gityo follows
-the repository's pull request template when one exists.
+each part with `prTitleStyle` and `prBodyStyle`, and gityo follows the
+repository's pull request template when one exists.
 
 Create the pull request if needed, then merge it:
 
@@ -198,8 +198,8 @@ Example:
   "postCommand": "push",
   "autoRunPostCommand": false,
   "instructions": "Write short, clear commit messages.",
-  "prTitleInstructions": "Use conventional commit style for the title.",
-  "prBodyInstructions": "Keep the description to two short paragraphs.",
+  "prTitleStyle": "conventional",
+  "prBodyStyle": "concise",
   "maxDiffTokens": 24000,
   "perFileCap": 400
 }
@@ -234,11 +234,28 @@ Style selection priority is `--style`, then config `style`, then `default`.
 `instructions` uses the same format. Set it to a string or `{ "path": "..." }`
 to load additional instructions from a file.
 
-### Pull request descriptions
+### Pull request styles
 
-`prTitleInstructions` and `prBodyInstructions` guide the generated PR title and
-body. Each accepts a string or `{ "path": "..." }`. When omitted, gityo uses its
-built-in title and body guidelines.
+PR titles and bodies use their own styles, separate from commit styles. Built-in
+title styles are `default` and `conventional`. Built-in body styles are
+`default`, `concise`, and `verbose`.
+
+- `default` title is a short, specific imperative title.
+- `conventional` title uses the conventional commits format, `type(scope): subject`.
+- `default` body explains what the pull request does and why.
+- `concise` body uses a few short sentences or bullets.
+- `verbose` body goes into detail, with headings when the change has distinct parts.
+
+Set `prTitleStyle` and `prBodyStyle` for defaults, or select one for a command
+with `--title-style` and `--body-style`:
+
+```bash
+gityo-pr-create --title-style conventional --body-style concise
+```
+
+Custom `prTitleStyles` and `prBodyStyles` extend the built-ins. A custom style
+with the same name replaces the built-in style. A style can be inline text or an
+object with a `path` to a prompt file, resolved like commit `styles`.
 
 gityo also looks for a pull request template at `.github/pull_request_template.md`
 and the other standard locations, then asks the model to fill in its sections.

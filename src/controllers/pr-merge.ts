@@ -9,6 +9,8 @@ import { confirmPullRequestMerge } from '../lib/prompts'
 
 export type PrMergeControllerOptions = {
   model?: string
+  titleStyle?: string
+  bodyStyle?: string
   yolo?: boolean
 }
 
@@ -18,7 +20,11 @@ export async function mergePullRequestController(
   options: PrMergeControllerOptions = {}
 ) {
   const branches = await resolvePrBranches(baseArg, headArg)
-  const context = await loadPullRequestContext(options.model)
+  const context = await loadPullRequestContext({
+    modelKey: options.model,
+    titleStyle: options.titleStyle,
+    bodyStyle: options.bodyStyle,
+  })
 
   let pullRequest = await findPullRequest(branches.base, branches.head)
 

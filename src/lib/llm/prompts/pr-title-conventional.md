@@ -1,0 +1,6 @@
+- Use the conventional commits format: type(scope): subject
+- Types: feat, fix, docs, style, refactor, perf, test, chore, ci
+- Scope is optional; include it when the change targets a clear area
+- Subject: imperative mood, lowercase, no trailing period
+- Maximum 72 characters in total
+- Describe the overall change, not a single commit

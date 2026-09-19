@@ -7,6 +7,8 @@ import {
 
 export type PrCreateControllerOptions = {
   model?: string
+  titleStyle?: string
+  bodyStyle?: string
   yolo?: boolean
   web?: boolean
 }
@@ -17,7 +19,11 @@ export async function createPullRequestController(
   options: PrCreateControllerOptions = {}
 ) {
   const branches = await resolvePrBranches(baseArg, headArg)
-  const context = await loadPullRequestContext(options.model)
+  const context = await loadPullRequestContext({
+    modelKey: options.model,
+    titleStyle: options.titleStyle,
+    bodyStyle: options.bodyStyle,
+  })
 
   const pullRequest = await createPullRequest({
     base: branches.base,

@@ -13,8 +13,7 @@ import {
   type PullRequest,
 } from './gh'
 import { resolveLanguageModel, resolveModelConfig } from './llm/model'
-import { generatePullRequest } from './llm/pr'
-import { resolveInstructionContent } from './llm/style'
+import { generatePullRequest, PR_BODY_STYLES, PR_TITLE_STYLES } from './llm/pr'
 import { loadConfig } from './load-config'
 import { acceptGeneratedPullRequest } from './prompts'
 import { runWithLoading } from './run-with-loading'
@@ -85,17 +84,61 @@ type PullRequestContent = {
   body: string
 }
 
-export async function loadPullRequestContext(modelKey?: string) {
+export type PullRequestContextOptions = {
+  modelKey?: string
+  titleStyle?: string
+  bodyStyle?: string
+}
+
+export async function loadPullRequestContext(
+  options: PullRequestContextOptions = {}
+) {
   const repoRoot = await getRepoRoot()
   const config = await loadConfig(repoRoot)
-  const modelConfig = resolveModelConfig(config.models, modelKey ?? 'default')
+  const modelConfig = resolveModelConfig(
+    config.models,
+    options.modelKey ?? 'default'
+  )
   const languageModel = resolveLanguageModel(modelConfig)
-  const titleInstructions = config.prTitleInstructions
-    ? await resolveInstructionContent(config.prTitleInstructions)
-    : null
-  const bodyInstructions = config.prBodyInstructions
-    ? await resolveInstructionContent(config.prBodyInstructions)
-    : null
+
+  const titleStyleKey = options.titleStyle ?? config.prTitleStyle ?? 'default'
+  const titleStyle =
+    config.prTitleStyles?.[titleStyleKey] ?? PR_TITLE_STYLES[titleStyleKey]
+
+  if (!titleStyle) {
+    const availableStyles = Object.keys({
+      ...PR_TITLE_STYLES,
+      ...config.prTitleStyles,
+    }).join(', ')
+    throw new Error(
+      `Pull request title style '${titleStyleKey}' is not configured. Available title styles: ${availableStyles}.`
+    )
+  }
+
+  const titleInstructions =
+    typeof titleStyle === 'string'
+      ? titleStyle
+      : await readFile(path.resolve(titleStyle.path), 'utf8')
+
+  const bodyStyleKey = options.bodyStyle ?? config.prBodyStyle ?? 'default'
+  const bodyStyle =
+    config.prBodyStyles?.[bodyStyleKey] ?? PR_BODY_STYLES[bodyStyleKey]
+
+  if (!bodyStyle) {
+    const availableStyles = Object.keys({
+      ...PR_BODY_STYLES,
+      ...config.prBodyStyles,
+    }).join(', ')
+    throw new Error(
+      `Pull request body style '${bodyStyleKey}' is not configured. Available body styles: ${availableStyles}.`
+    )
+  }
+
+  const bodyInstructions =
+    typeof bodyStyle === 'string'
+      ? bodyStyle
+      : await readFile(path.resolve(bodyStyle.path), 'utf8')
+
   const template = await readPullRequestTemplate(repoRoot)
 
   return {

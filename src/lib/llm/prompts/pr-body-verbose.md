@@ -1,0 +1,5 @@
+- Explain what the pull request does and why in detail
+- Do NOT enumerate changed files, commits, or a changelog; reviewers can read the diff on GitHub
+- If a pull request template is provided, follow its structure and fill every relevant section
+- Cover user-facing behavior, important implementation details, and any breaking or migration notes
+- Use short paragraphs and bullet points, with headings when the change has distinct parts
