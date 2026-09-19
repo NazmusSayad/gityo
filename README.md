@@ -2,8 +2,6 @@
 
 `gityo` writes or generates a commit message for your changes, stages them, and commits. It can then run a post-commit git action.
 
-It replaces the usual sequence of git commands with a single command.
-
 ## Install
 
 ```bash
