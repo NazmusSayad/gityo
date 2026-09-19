@@ -7,7 +7,7 @@ import {
   loadPullRequestContext,
   resolvePrBranches,
 } from '../lib/pr'
-import { selectionTheme } from '../lib/prompts'
+import { mergeTheme } from '../lib/prompts'
 import { handleUncommittedChanges } from './local-changes'
 
 export type PrMergeControllerOptions = {
@@ -56,9 +56,9 @@ export async function mergePullRequestController(
     console.log(chalk.yellow(`✓ Merging pull request #${pullRequest.number}`))
   } else {
     const confirmed = await confirm({
-      message: `${chalk.magenta('Merge PR')} ${chalk.cyan.bold(`#${pullRequest.number}`)}: ${chalk.red.bold(branches.base)} ${chalk.dim('<-')} ${chalk.yellow.bold(branches.head)}`,
+      message: `Merge PR ${chalk.cyan.bold(`#${pullRequest.number}`)}: ${chalk.red.bold(branches.base)} ${chalk.reset('←')} ${chalk.yellow.bold(branches.head)}`,
       default: true,
-      theme: selectionTheme,
+      theme: mergeTheme,
     })
 
     if (!confirmed) {

@@ -13,6 +13,18 @@ export const selectionTheme = {
   },
 }
 
+export const mergeTheme = {
+  prefix: {
+    idle: chalk.magenta('?'),
+    done: chalk.green('✓'),
+  },
+
+  style: {
+    message: (txt: string, status: 'idle' | 'done') =>
+      status === 'done' ? chalk.green(txt) : chalk.magenta(txt),
+  },
+}
+
 export async function acceptGenerated(
   question: string,
   regenerateHint: string
