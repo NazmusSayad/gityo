@@ -1,4 +1,5 @@
 import { findPullRequest, openPullRequest } from '../lib/gh'
+import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
 import {
   createPullRequest,
   loadPullRequestContext,
@@ -18,20 +19,20 @@ export async function createPullRequestController(
   headArg: string | undefined,
   options: PrCreateControllerOptions = {}
 ) {
-  const branches = await resolvePrBranches(baseArg, headArg)
   const context = await loadPullRequestContext({
     modelKey: options.model,
     titleStyle: options.titleStyle,
     bodyStyle: options.bodyStyle,
   })
+  const systemPrompt = buildPullRequestSystemPrompt(context)
+
+  const branches = await resolvePrBranches(baseArg, headArg)
 
   const pullRequest = await createPullRequest({
     base: branches.base,
     head: branches.head,
+    systemPrompt,
     languageModel: context.languageModel,
-    titleInstructions: context.titleInstructions,
-    bodyInstructions: context.bodyInstructions,
-    template: context.template,
     maxDiffTokens: context.config.maxDiffTokens,
     autoAccept: options.yolo ?? false,
   }).catch(async (error: unknown) => {

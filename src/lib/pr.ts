@@ -27,15 +27,6 @@ const renderPullRequest = createRenderer({
   listIndent: 2,
 })
 
-const PR_TEMPLATE_PATHS = [
-  '.github/pull_request_template.md',
-  '.github/PULL_REQUEST_TEMPLATE.md',
-  'pull_request_template.md',
-  'PULL_REQUEST_TEMPLATE.md',
-  'docs/pull_request_template.md',
-  'docs/PULL_REQUEST_TEMPLATE.md',
-]
-
 export async function getCurrentBranch() {
   const output = await exec('git', ['branch', '--show-current'])
 
@@ -72,9 +63,7 @@ export type CreatePullRequestOptions = {
   base: string
   head: string
   languageModel: LanguageModel
-  titleInstructions: string | null
-  bodyInstructions: string | null
-  template: string | null
+  systemPrompt: string
   maxDiffTokens?: number
   autoAccept?: boolean
 }
@@ -139,14 +128,11 @@ export async function loadPullRequestContext(
       ? bodyStyle
       : await readFile(path.resolve(bodyStyle.path), 'utf8')
 
-  const template = await readPullRequestTemplate(repoRoot)
-
   return {
     config,
     languageModel,
     titleInstructions,
     bodyInstructions,
-    template,
   }
 }
 
@@ -168,9 +154,7 @@ export async function createPullRequest(
     () =>
       generatePullRequest({
         languageModel: options.languageModel,
-        titleInstructions: options.titleInstructions,
-        bodyInstructions: options.bodyInstructions,
-        template: options.template,
+        systemPrompt: options.systemPrompt,
         context,
       })
   )
@@ -186,9 +170,7 @@ export async function createPullRequest(
     draft = await runWithLoading('Generating pull request title and body', () =>
       generatePullRequest({
         languageModel: options.languageModel,
-        titleInstructions: options.titleInstructions,
-        bodyInstructions: options.bodyInstructions,
-        template: options.template,
+        systemPrompt: options.systemPrompt,
         context,
       })
     )
@@ -281,19 +263,4 @@ function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
   }
 
   return context
-}
-
-async function readPullRequestTemplate(repoRoot: string) {
-  for (const relativePath of PR_TEMPLATE_PATHS) {
-    const contents = await readFile(
-      path.join(repoRoot, relativePath),
-      'utf8'
-    ).catch(() => null)
-
-    if (contents && contents.trim().length > 0) {
-      return contents.trim()
-    }
-  }
-
-  return null
 }

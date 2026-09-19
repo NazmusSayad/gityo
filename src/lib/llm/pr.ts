@@ -19,40 +19,35 @@ export const PR_BODY_STYLES: Record<string, string> = {
 
 type UserMessage = { role: 'user'; content: string }
 
+export function buildPullRequestSystemPrompt(options: {
+  titleInstructions: string
+  bodyInstructions: string
+}) {
+  return prPrompt
+    .replace('{{title}}', options.titleInstructions.trim())
+    .replace('{{body}}', options.bodyInstructions.trim())
+}
+
 export type GeneratePullRequestOptions = {
   languageModel: LanguageModel
-  titleInstructions: string | null
-  bodyInstructions: string | null
-  template: string | null
+  systemPrompt: string
   context: string
 }
 
 export async function generatePullRequest(
   options: GeneratePullRequestOptions
 ): Promise<string> {
-  const messages: UserMessage[] = [{ role: 'user', content: options.context }]
-
-  if (options.template) {
-    messages.push({
+  const messages: UserMessage[] = [
+    { role: 'user', content: options.context },
+    {
       role: 'user',
-      content: `Pull request template to follow:\n${options.template}`,
-    })
-  }
-
-  messages.push({
-    role: 'user',
-    content: 'Generate the pull request Markdown document from the above.',
-  })
-
-  const titleGuidelines = (options.titleInstructions ?? prTitleDefault).trim()
-  const bodyGuidelines = (options.bodyInstructions ?? prBodyDefault).trim()
-  const instructions = prPrompt
-    .replace('{{title}}', titleGuidelines)
-    .replace('{{body}}', bodyGuidelines)
+      content: 'Generate the pull request Markdown document from the above.',
+    },
+  ]
 
   const result = await generateText({
     model: options.languageModel,
-    instructions,
+    instructions: options.systemPrompt,
     messages,
   })
 

@@ -1,5 +1,6 @@
 import chalk from 'chalk'
 import { findPullRequest, mergePullRequest } from '../lib/gh'
+import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
 import {
   createPullRequest,
   loadPullRequestContext,
@@ -19,12 +20,14 @@ export async function mergePullRequestController(
   headArg: string | undefined,
   options: PrMergeControllerOptions = {}
 ) {
-  const branches = await resolvePrBranches(baseArg, headArg)
   const context = await loadPullRequestContext({
     modelKey: options.model,
     titleStyle: options.titleStyle,
     bodyStyle: options.bodyStyle,
   })
+  const systemPrompt = buildPullRequestSystemPrompt(context)
+
+  const branches = await resolvePrBranches(baseArg, headArg)
 
   let pullRequest = await findPullRequest(branches.base, branches.head)
 
@@ -34,10 +37,8 @@ export async function mergePullRequestController(
     pullRequest = await createPullRequest({
       base: branches.base,
       head: branches.head,
+      systemPrompt,
       languageModel: context.languageModel,
-      titleInstructions: context.titleInstructions,
-      bodyInstructions: context.bodyInstructions,
-      template: context.template,
       maxDiffTokens: context.config.maxDiffTokens,
       autoAccept: options.yolo ?? false,
     })
