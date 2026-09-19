@@ -132,18 +132,14 @@ function parsePullRequestContent(text: string): PullRequestContent {
   const lines = text.trim().split('\n')
 
   return {
-    title: cleanTitle(lines[0]),
+    title: lines[0]
+      .trim()
+      .replace(/^#{1,6}\s*/, '')
+      .replace(/^(\*\*|__|\*|_|`)+/, '')
+      .replace(/(\*\*|__|\*|_|`)+$/, '')
+      .trim(),
     body: lines.slice(1).join('\n').trim(),
   }
-}
-
-function cleanTitle(line: string) {
-  return line
-    .trim()
-    .replace(/^#{1,6}\s*/, '')
-    .replace(/^(\*\*|__|\*|_|`)+/, '')
-    .replace(/(\*\*|__|\*|_|`)+$/, '')
-    .trim()
 }
 
 async function resolveCreatedPullRequest(
@@ -175,7 +171,11 @@ function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
   const lines = [
     'Commits between base and head:',
     ...compare.commits.map((entry) =>
-      formatCommitMessage(entry.commit.message)
+      entry.commit.message
+        .trim()
+        .split('\n')
+        .map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`))
+        .join('\n')
     ),
     '',
     'Changed files:',
@@ -202,12 +202,4 @@ function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
   }
 
   return context
-}
-
-function formatCommitMessage(message: string) {
-  return message
-    .trim()
-    .split('\n')
-    .map((line, index) => (index === 0 ? `- ${line}` : `  ${line}`))
-    .join('\n')
 }
