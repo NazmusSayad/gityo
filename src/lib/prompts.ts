@@ -18,7 +18,7 @@ export async function acceptGenerated(
   regenerateHint: string
 ) {
   const value = await input({
-    message: `${question}? ${chalk.reset.dim('[Y/r]')}`,
+    message: `${question} ${chalk.reset.dim('[Y/r]')}`,
     theme: selectionTheme,
     validate: (v) => {
       const normalized = v.trim()
