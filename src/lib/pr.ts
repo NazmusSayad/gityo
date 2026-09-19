@@ -171,7 +171,7 @@ export async function createPullRequest(
       options.autoAccept ||
       (await acceptGenerated(
         `${chalk.green('Create PR')}: ${chalk.red.bold(options.base)} ${chalk.dim('<-')} ${chalk.yellow.bold(options.head)}`,
-        'generate a new pull request'
+        'generate a new pull message'
       ))
     ) {
       break
