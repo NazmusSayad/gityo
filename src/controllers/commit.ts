@@ -1,3 +1,4 @@
+import { confirm } from '@inquirer/prompts'
 import type { LanguageModel } from 'ai'
 import chalk from 'chalk'
 import type { SimpleGit } from 'simple-git'
@@ -21,10 +22,7 @@ import {
   resolveStyle,
 } from '../lib/llm/style'
 import { loadConfig } from '../lib/load-config'
-import {
-  acceptGeneratedCommitMessage,
-  promptForPostCommand,
-} from '../lib/prompts'
+import { acceptGenerated, selectionTheme } from '../lib/prompts'
 import { runWithLoading } from '../lib/run-with-loading'
 
 type MainControllerOptions = {
@@ -119,7 +117,10 @@ export async function mainController(options: MainControllerOptions = {}) {
         break
       }
 
-      const action = await acceptGeneratedCommitMessage()
+      const action = await acceptGenerated(
+        'Accept generated commit message',
+        'generate a new commit message'
+      )
       if (action) break
     }
   }
@@ -149,7 +150,11 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (forceExecPostCommand || config.autoRunPostCommand) {
     console.log(chalk.yellow(`✓ Executing: ${config.postCommand}`))
   } else {
-    const shouldRunPostCommand = await promptForPostCommand(config.postCommand)
+    const shouldRunPostCommand = await confirm({
+      message: `Run post command: ${config.postCommand}?`,
+      default: true,
+      theme: selectionTheme,
+    })
     if (!shouldRunPostCommand) {
       return
     }

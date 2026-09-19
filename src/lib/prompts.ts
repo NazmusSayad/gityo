@@ -1,7 +1,7 @@
-import { confirm, input } from '@inquirer/prompts'
+import { input } from '@inquirer/prompts'
 import chalk from 'chalk'
 
-const selectionTheme = {
+export const selectionTheme = {
   prefix: {
     idle: chalk.blue('?'),
     done: chalk.green('✓'),
@@ -13,23 +13,12 @@ const selectionTheme = {
   },
 }
 
-export function acceptGeneratedCommitMessage() {
-  return acceptGenerated(
-    'generated commit message',
-    'generate a new commit message'
-  )
-}
-
-export function acceptGeneratedPullRequest() {
-  return acceptGenerated(
-    'generated pull request',
-    'generate a new pull request'
-  )
-}
-
-async function acceptGenerated(subject: string, regenerateHint: string) {
+export async function acceptGenerated(
+  question: string,
+  regenerateHint: string
+) {
   const value = await input({
-    message: `Accept ${subject}? ${chalk.reset.dim('[Y/r]')}`,
+    message: `${question}? ${chalk.reset.dim('[Y/r]')}`,
     theme: selectionTheme,
     validate: (v) => {
       const normalized = v.trim()
@@ -53,20 +42,4 @@ async function acceptGenerated(subject: string, regenerateHint: string) {
   }
 
   return false
-}
-
-export async function promptForPostCommand(commandLabel: string) {
-  return confirm({
-    message: `Run post command: ${commandLabel}?`,
-    default: true,
-    theme: selectionTheme,
-  })
-}
-
-export function confirmPullRequestMerge(description: string) {
-  return confirm({
-    message: `Merge pull request ${description}?`,
-    default: true,
-    theme: selectionTheme,
-  })
 }

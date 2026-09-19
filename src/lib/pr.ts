@@ -15,7 +15,7 @@ import {
 import { resolveLanguageModel, resolveModelConfig } from './llm/model'
 import { generatePullRequest, PR_BODY_STYLES, PR_TITLE_STYLES } from './llm/pr'
 import { loadConfig } from './load-config'
-import { acceptGeneratedPullRequest } from './prompts'
+import { acceptGenerated } from './prompts'
 import { runWithLoading } from './run-with-loading'
 import { exec } from './shell'
 
@@ -167,7 +167,13 @@ export async function createPullRequest(
     console.log(renderPullRequest(draft).trim())
     console.log('')
 
-    if (options.autoAccept || (await acceptGeneratedPullRequest())) {
+    if (
+      options.autoAccept ||
+      (await acceptGenerated(
+        `${chalk.green('Create PR')}: ${chalk.red.bold(options.base)} ${chalk.dim('<-')} ${chalk.yellow.bold(options.head)}`,
+        'generate a new pull request'
+      ))
+    ) {
       break
     }
   }

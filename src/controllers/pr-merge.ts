@@ -1,3 +1,4 @@
+import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
 import { findPullRequest, mergePullRequest } from '../lib/gh'
 import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
@@ -6,7 +7,7 @@ import {
   loadPullRequestContext,
   resolvePrBranches,
 } from '../lib/pr'
-import { confirmPullRequestMerge } from '../lib/prompts'
+import { selectionTheme } from '../lib/prompts'
 
 export type PrMergeControllerOptions = {
   model?: string
@@ -49,9 +50,11 @@ export async function mergePullRequestController(
   if (options.yolo) {
     console.log(chalk.yellow(`✓ Merging pull request #${pullRequest.number}`))
   } else {
-    const confirmed = await confirmPullRequestMerge(
-      `${branches.base} <- ${branches.head}`
-    )
+    const confirmed = await confirm({
+      message: `${chalk.magenta('Merge PR')} ${chalk.cyan.bold(`#${pullRequest.number}`)}: ${chalk.red.bold(branches.base)} ${chalk.dim('<-')} ${chalk.yellow.bold(branches.head)}`,
+      default: true,
+      theme: selectionTheme,
+    })
 
     if (!confirmed) {
       console.log('Pull request merge cancelled.')

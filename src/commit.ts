@@ -2,8 +2,8 @@
 
 import { Command } from '@commander-js/extra-typings'
 import pkg from '../package.json'
+import { mainController } from './controllers/commit'
 import { showConfigController } from './controllers/config'
-import { mainController } from './controllers/main'
 import { handleError } from './lib/handle-error'
 
 const app = new Command()
