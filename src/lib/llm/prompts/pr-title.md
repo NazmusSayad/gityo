@@ -1,0 +1,4 @@
+- Maximum 72 characters
+- Imperative mood, no trailing period
+- Describe the overall change, not a single commit
+- Be specific about the affected areas

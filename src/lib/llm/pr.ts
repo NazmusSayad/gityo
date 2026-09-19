@@ -1,4 +1,6 @@
 import { generateText, type LanguageModel } from 'ai'
+import prBodyPrompt from './prompts/pr-body.md?raw'
+import prTitlePrompt from './prompts/pr-title.md?raw'
 import prPrompt from './prompts/pr.md?raw'
 
 type UserMessage = { role: 'user'; content: string }
@@ -23,28 +25,20 @@ export async function generatePullRequest(
     })
   }
 
-  if (options.titleInstructions) {
-    messages.push({
-      role: 'user',
-      content: `Title instructions:\n${options.titleInstructions}`,
-    })
-  }
-
-  if (options.bodyInstructions) {
-    messages.push({
-      role: 'user',
-      content: `Body instructions:\n${options.bodyInstructions}`,
-    })
-  }
-
   messages.push({
     role: 'user',
-    content: 'Generate the pull request title and body from the above.',
+    content: 'Generate the pull request Markdown document from the above.',
   })
+
+  const titleGuidelines = (options.titleInstructions ?? prTitlePrompt).trim()
+  const bodyGuidelines = (options.bodyInstructions ?? prBodyPrompt).trim()
+  const instructions = prPrompt
+    .replace('{{title}}', titleGuidelines)
+    .replace('{{body}}', bodyGuidelines)
 
   const result = await generateText({
     model: options.languageModel,
-    instructions: prPrompt,
+    instructions,
     messages,
   })
 

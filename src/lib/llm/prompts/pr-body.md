@@ -1,0 +1,5 @@
+- Explain what the pull request does and why
+- Do NOT enumerate changed files, commits, or a changelog; reviewers can read the diff on GitHub
+- If a pull request template is provided, follow its structure
+- Mention user-facing behavior, important implementation details, and any breaking or migration notes
+- Keep it concise

@@ -237,7 +237,8 @@ to load additional instructions from a file.
 ### Pull request descriptions
 
 `prTitleInstructions` and `prBodyInstructions` guide the generated PR title and
-body. Each accepts a string or `{ "path": "..." }`.
+body. Each accepts a string or `{ "path": "..." }`. When omitted, gityo uses its
+built-in title and body guidelines.
 
 gityo also looks for a pull request template at `.github/pull_request_template.md`
 and the other standard locations, then asks the model to fill in its sections.
