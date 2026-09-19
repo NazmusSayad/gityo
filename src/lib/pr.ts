@@ -1,5 +1,6 @@
 import type { LanguageModel } from 'ai'
 import chalk from 'chalk'
+import { createRenderer } from 'markdansi'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { DEFAULT_MAX_DIFF_TOKENS, estimateTokens } from './diff'
@@ -20,6 +21,12 @@ import { runWithLoading } from './run-with-loading'
 import { exec } from './shell'
 
 const PR_URL_PATTERN = /https:\/\/[^\s]+\/pull\/(\d+)/
+const PR_RENDER_WIDTH = 80
+
+const renderPullRequest = createRenderer({
+  width: PR_RENDER_WIDTH,
+  listIndent: 2,
+})
 
 const PR_TEMPLATE_PATHS = [
   '.github/pull_request_template.md',
@@ -126,7 +133,7 @@ export async function createPullRequest(
   )
 
   while (true) {
-    console.log(chalk.cyan.dim(draft))
+    console.log(renderPullRequest(draft).trim())
     console.log('')
 
     if (options.autoAccept || (await acceptGeneratedPullRequest())) {
