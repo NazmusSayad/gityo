@@ -23,7 +23,6 @@ import {
 import { loadConfig } from '../lib/load-config'
 import {
   acceptGeneratedCommitMessage,
-  promptForCommitMessageInput,
   promptForPostCommand,
 } from '../lib/prompts'
 import { runWithLoading } from '../lib/run-with-loading'
@@ -85,15 +84,6 @@ export async function mainController(options: MainControllerOptions = {}) {
     console.log(chalk.yellow('✓ Using direct commit message'))
     console.log(chalk.cyan.dim(finalCommitMessage))
     console.log('')
-  }
-
-  if (finalCommitMessage.length === 0 && !forceLLMGenerate) {
-    finalCommitMessage = await promptForCommitMessageInput(modelConfig.model)
-    if (finalCommitMessage.length > 0) {
-      console.log(chalk.yellow('✓ Using manual commit message'))
-      console.log(chalk.cyan.dim(finalCommitMessage))
-      console.log('')
-    }
   }
 
   if (finalCommitMessage.length === 0) {

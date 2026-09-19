@@ -33,7 +33,7 @@ gityo
 
 Typical flow:
 
-1. Write a commit message or generate one (from staged files if any, otherwise all changes)
+1. Generate a commit message (from staged files if any, otherwise all changes)
 2. Stage everything if nothing is staged
 3. Create the commit
 4. Optionally run the configured post-commit action

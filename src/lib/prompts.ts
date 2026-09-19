@@ -1,4 +1,3 @@
-import { createPrompt, isEnterKey, useKeypress, useState } from '@inquirer/core'
 import { confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
 
@@ -13,43 +12,6 @@ const selectionTheme = {
       status === 'done' ? chalk.green(txt) : chalk.blue(txt),
   },
 }
-
-type CommitMessageInputConfig = {
-  message: string
-  required?: boolean
-}
-
-const commitMessageInputPrompt = createPrompt<string, CommitMessageInputConfig>(
-  (config, done) => {
-    const [status, setStatus] = useState<'idle' | 'done'>('idle')
-    const [value, setValue] = useState('')
-    const inputPrefix = chalk.dim('❯ ')
-
-    useKeypress((key, readline) => {
-      if (!isEnterKey(key)) {
-        setValue(readline.line)
-        return
-      }
-
-      const answer = value
-
-      if (config.required && answer.trim().length === 0) {
-        return
-      }
-
-      setStatus('done')
-      setValue(answer)
-      done(answer)
-    })
-
-    const prefix = status === 'done' ? chalk.green('✓') : chalk.blue('?')
-    const messageColor = status === 'done' ? chalk.green : chalk.blue
-    const header = `${prefix} ${messageColor(config.message)}`
-
-    if (status === 'done') return header
-    return `${header}\n${inputPrefix}${value}`
-  }
-)
 
 export function acceptGeneratedCommitMessage() {
   return acceptGenerated(
@@ -91,15 +53,6 @@ async function acceptGenerated(subject: string, regenerateHint: string) {
   }
 
   return false
-}
-
-export async function promptForCommitMessageInput(model: string) {
-  const message = await commitMessageInputPrompt({
-    required: false,
-    message: `Commit message ${chalk.reset.dim(`(⏎ submit • ${model})`)}`,
-  })
-
-  return message.trim()
 }
 
 export async function promptForPostCommand(commandLabel: string) {
