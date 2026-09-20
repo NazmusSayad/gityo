@@ -1,45 +1,62 @@
-import { createRenderer } from 'markdansi'
+import chalk from 'chalk'
 import type { z } from 'zod'
-import { PR_BODY_STYLES, PR_TITLE_STYLES } from '../lib/llm/pr'
-import { BUILTIN_STYLES, resolveInstructionContent } from '../lib/llm/style'
+import {
+  COMMIT_STYLE_PROMPTS,
+  PR_BODY_PROMPTS,
+  PR_TITLE_PROMPTS,
+  type Prompt,
+} from '../lib/llm/prompts-registry'
 import { loadConfig } from '../lib/load-config'
 import type { instructionSchema } from '../schema'
 
-const renderMarkdown = createRenderer({ width: 80, listIndent: 2 })
-
-export async function showCommitStylesController() {
-  const config = await loadConfig()
-
-  await renderStyles('Commit styles', {
-    ...BUILTIN_STYLES,
-    ...config.commitStyles,
-  })
+type StyleEntry = {
+  key: string
+  description: string
 }
 
-export async function showPrStylesController() {
+export async function showStylesController() {
   const config = await loadConfig()
 
-  await renderStyles('PR title styles', {
-    ...PR_TITLE_STYLES,
-    ...config.prTitleStyles,
-  })
-  await renderStyles('PR body styles', {
-    ...PR_BODY_STYLES,
-    ...config.prBodyStyles,
-  })
+  printStyles(
+    'Commit styles',
+    mergeStyles(COMMIT_STYLE_PROMPTS, config.commitStyles)
+  )
+  printStyles(
+    'PR title styles',
+    mergeStyles(PR_TITLE_PROMPTS, config.prTitleStyles)
+  )
+  printStyles(
+    'PR body styles',
+    mergeStyles(PR_BODY_PROMPTS, config.prBodyStyles)
+  )
 }
 
-async function renderStyles(
-  heading: string,
-  styles: Record<string, z.infer<typeof instructionSchema>>
+function mergeStyles(
+  builtin: Record<string, Prompt>,
+  custom: Record<string, z.infer<typeof instructionSchema>> | undefined
 ) {
-  const sections = [`# ${heading}`]
+  const entries: StyleEntry[] = Object.entries(builtin).map((entry) => ({
+    key: entry[0],
+    description: entry[1].description,
+  }))
 
-  for (const key of Object.keys(styles)) {
-    const content = await resolveInstructionContent(styles[key])
-    sections.push(`## ${key}\n\n${content.trim()}`)
+  for (const key of Object.keys(custom ?? {})) {
+    if (builtin[key]) {
+      continue
+    }
+
+    entries.push({ key, description: 'Custom style' })
   }
 
-  console.log(renderMarkdown(sections.join('\n\n')).trim())
+  return entries
+}
+
+function printStyles(title: string, entries: StyleEntry[]) {
+  console.log(chalk.bold(title))
+
+  for (const entry of entries) {
+    console.log(`- ${entry.key}: ${chalk.dim(entry.description)}`)
+  }
+
   console.log('')
 }

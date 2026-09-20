@@ -4,7 +4,7 @@ import {
   PROJECT_CONFIG_FILE_NAME,
 } from '../lib/load-config'
 
-export const CONFIG_SCHEMA_URL =
+const CONFIG_SCHEMA_URL =
   'https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json'
 
 export async function showConfigController() {

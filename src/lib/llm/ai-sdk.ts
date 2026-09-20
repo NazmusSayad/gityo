@@ -31,7 +31,7 @@ import { createMinimax } from 'vercel-minimax-ai-provider'
 import { createWorkersAI } from 'workers-ai-provider'
 import { createZhipu } from 'zhipu-ai-provider'
 
-export type ProviderFactory = (options: Record<string, unknown>) => {
+type ProviderFactory = (options: Record<string, unknown>) => {
   languageModel: (modelId: string) => LanguageModel
 }
 

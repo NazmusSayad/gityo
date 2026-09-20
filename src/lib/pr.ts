@@ -33,7 +33,7 @@ export async function getCurrentBranch() {
   return output.trim()
 }
 
-export async function getRepoRoot() {
+async function getRepoRoot() {
   const output = await exec('git', ['rev-parse', '--show-toplevel'])
 
   return output.trim()
@@ -59,7 +59,7 @@ export async function resolvePrBranches(baseArg?: string, headArg?: string) {
   return { base, head }
 }
 
-export type CreatePullRequestOptions = {
+type CreatePullRequestOptions = {
   base: string
   head: string
   languageModel: LanguageModel
@@ -73,7 +73,7 @@ type PullRequestContent = {
   body: string
 }
 
-export type PullRequestContextOptions = {
+type PullRequestContextOptions = {
   modelKey?: string
   titleStyle?: string
   bodyStyle?: string

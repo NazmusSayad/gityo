@@ -7,7 +7,7 @@ export type PullRequest = {
   headRefName: string
 }
 
-export type CompareFile = {
+type CompareFile = {
   filename: string
   previousFilename?: string
   status: string

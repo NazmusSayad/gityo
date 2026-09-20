@@ -68,5 +68,3 @@ export function resolveConfig(input: unknown) {
       parsed.postCommand === undefined ? ('push' as const) : parsed.postCommand,
   }
 }
-
-export type ResolvedConfig = ReturnType<typeof resolveConfig>

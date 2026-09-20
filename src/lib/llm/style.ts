@@ -2,19 +2,14 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { z } from 'zod'
 import { instructionSchema } from '../../schema'
-import conciseStyle from './prompts/concise.md?raw'
-import defaultStyle from './prompts/default.md?raw'
-import explanatoryStyle from './prompts/explanatory.md?raw'
-import gitmojiStyle from './prompts/gitmoji.md?raw'
-import plainStyle from './prompts/plain.md?raw'
+import { COMMIT_STYLE_PROMPTS } from './prompts-registry'
 
-export const BUILTIN_STYLES: Record<string, string> = {
-  default: defaultStyle,
-  concise: conciseStyle,
-  explanatory: explanatoryStyle,
-  plain: plainStyle,
-  gitmoji: gitmojiStyle,
-}
+const BUILTIN_STYLES: Record<string, string> = Object.fromEntries(
+  Object.entries(COMMIT_STYLE_PROMPTS).map((entry) => [
+    entry[0],
+    entry[1].prompt,
+  ])
+)
 
 export function getStyleKeys(
   styles: Record<string, z.infer<typeof instructionSchema>> | undefined

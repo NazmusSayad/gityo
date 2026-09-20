@@ -6,10 +6,7 @@ import { mainController } from './controllers/commit'
 import { showConfigController } from './controllers/config'
 import { createPullRequestController } from './controllers/pr-create'
 import { mergePullRequestController } from './controllers/pr-merge'
-import {
-  showCommitStylesController,
-  showPrStylesController,
-} from './controllers/styles'
+import { showStylesController } from './controllers/styles'
 import { handleError } from './lib/handle-error'
 
 const app = new Command()
@@ -48,7 +45,7 @@ const app = new Command()
     handleError(() => mainController(options))
   })
 
-const commit = app
+app
   .command('commit')
   .description(
     'Stage changes, generate a commit message, create a commit, and run a post-commit git command.'
@@ -83,22 +80,9 @@ const commit = app
     handleError(() => mainController(options))
   })
 
-commit
-  .command('styles')
-  .description('Render available commit message styles.')
-  .action(() => {
-    handleError(showCommitStylesController)
-  })
-
 const pr = app
   .command('pr')
   .description('Create and merge GitHub pull requests.')
-
-pr.command('styles')
-  .description('Render available pull request title and body styles.')
-  .action(() => {
-    handleError(showPrStylesController)
-  })
 
 pr.command('create')
   .description('Create a pull request with an AI-generated title and body.')
@@ -165,11 +149,18 @@ pr.command('merge')
     )
   })
 
-app
+const config = app
   .command('config')
   .description('Show where to manage your gityo configuration.')
   .action(() => {
     handleError(showConfigController)
+  })
+
+config
+  .command('styles')
+  .description('Render available commit, PR title, and PR body styles.')
+  .action(() => {
+    handleError(showStylesController)
   })
 
 void app.parseAsync(process.argv)

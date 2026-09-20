@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 
-export class CommandError extends Error {
+class CommandError extends Error {
   constructor(
     command: string,
     args: string[],

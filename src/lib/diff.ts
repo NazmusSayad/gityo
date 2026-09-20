@@ -26,7 +26,7 @@ type FileSection = {
   binary: boolean
 }
 
-export type MinimizedDiff = {
+type MinimizedDiff = {
   toc: string
   body: string
 }

@@ -1,21 +1,14 @@
 import { generateText, type LanguageModel } from 'ai'
-import prBodyConcise from './prompts/pr-body-concise.md?raw'
-import prBodyDefault from './prompts/pr-body-default.md?raw'
-import prBodyVerbose from './prompts/pr-body-verbose.md?raw'
-import prTitleDefault from './prompts/pr-title-default.md?raw'
-import prTitlePlain from './prompts/pr-title-plain.md?raw'
+import { PR_BODY_PROMPTS, PR_TITLE_PROMPTS } from './prompts-registry'
 import prPrompt from './prompts/pr.md?raw'
 
-export const PR_TITLE_STYLES: Record<string, string> = {
-  default: prTitleDefault,
-  plain: prTitlePlain,
-}
+export const PR_TITLE_STYLES: Record<string, string> = Object.fromEntries(
+  Object.entries(PR_TITLE_PROMPTS).map((entry) => [entry[0], entry[1].prompt])
+)
 
-export const PR_BODY_STYLES: Record<string, string> = {
-  default: prBodyDefault,
-  concise: prBodyConcise,
-  verbose: prBodyVerbose,
-}
+export const PR_BODY_STYLES: Record<string, string> = Object.fromEntries(
+  Object.entries(PR_BODY_PROMPTS).map((entry) => [entry[0], entry[1].prompt])
+)
 
 type UserMessage = { role: 'user'; content: string }
 
@@ -28,7 +21,7 @@ export function buildPullRequestSystemPrompt(options: {
     .replace('{{body}}', options.bodyInstructions.trim())
 }
 
-export type GeneratePullRequestOptions = {
+type GeneratePullRequestOptions = {
   languageModel: LanguageModel
   systemPrompt: string
   context: string

@@ -10,7 +10,7 @@ import {
 import { mergeTheme } from '../lib/prompts'
 import { handleUncommittedChanges } from './local-changes'
 
-export type PrMergeControllerOptions = {
+type PrMergeControllerOptions = {
   model?: string
   titleStyle?: string
   bodyStyle?: string

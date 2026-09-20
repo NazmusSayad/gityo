@@ -7,7 +7,7 @@ import {
 } from '../lib/pr'
 import { handleUncommittedChanges } from './local-changes'
 
-export type PrCreateControllerOptions = {
+type PrCreateControllerOptions = {
   model?: string
   titleStyle?: string
   bodyStyle?: string

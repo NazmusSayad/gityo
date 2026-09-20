@@ -102,8 +102,7 @@ Requires [GitHub CLI](https://cli.github.com) with `gh auth login` completed.
 
 Styles control how commit messages, PR titles, and PR bodies are written. Choose a built-in style or supply your own writing instructions, with separate defaults for each.
 
-- Run `gityo commit styles` to view commit styles.
-- Run `gityo pr styles` to view PR title and body styles.
+- Run `gityo config styles` to view commit, PR title, and PR body styles.
 - Add `.gityo.json` to a repository for project-specific settings.
 - Add `.gityo.md` for project-specific commit instructions.
 - Run `gityo config` to see config locations.
