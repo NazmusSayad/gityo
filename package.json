@@ -1,6 +1,6 @@
 {
   "name": "gityo",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NazmusSayad/gityo.git"
@@ -17,9 +17,7 @@
     "dev": "tsdown --config ./tsdown.config.ts --watch"
   },
   "bin": {
-    "gityo": "dist/commit.js",
-    "gityo-pr-create": "dist/pr-create.js",
-    "gityo-pr-merge": "dist/pr-merge.js"
+    "gityo": "dist/index.js"
   },
   "devDependencies": {
     "@ai-sdk/amazon-bedrock": "^5.0.87",

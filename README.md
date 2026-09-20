@@ -93,8 +93,8 @@ gityo
 
 Requires [GitHub CLI](https://cli.github.com) with `gh auth login` completed.
 
-- `gityo-pr-create` generates a title and body for review, then creates the PR.
-- `gityo-pr-merge` merges the PR, creating it first if needed.
+- `gityo pr create` generates a title and body for review, then creates the PR.
+- `gityo pr merge` merges the PR, creating it first if needed.
 - Both use the current branch and the repository's default base branch unless you specify branches.
 - PRs use pushed commits. For uncommitted changes on the current head branch, gityo offers to commit and push first.
 
@@ -102,6 +102,8 @@ Requires [GitHub CLI](https://cli.github.com) with `gh auth login` completed.
 
 Styles control how commit messages, PR titles, and PR bodies are written. Choose a built-in style or supply your own writing instructions, with separate defaults for each.
 
+- Run `gityo commit styles` to view commit styles.
+- Run `gityo pr styles` to view PR title and body styles.
 - Add `.gityo.json` to a repository for project-specific settings.
 - Add `.gityo.md` for project-specific commit instructions.
 - Run `gityo config` to see config locations.
