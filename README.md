@@ -93,7 +93,7 @@ Put models in the `models` map of your config. Each key is a name you can pass t
       "model": "gpt-5-mini"
     }
   },
-  "style": "concise"
+  "commitStyle": "concise"
 }
 ```
 
@@ -133,9 +133,11 @@ gityo reads three files. You edit them by hand.
 
 - `~/.config/gityo.json` is your global config.
 - `.gityo.json` in the repository root is the project config. Its keys override the global ones.
-- `.gityo.md` in the repository root holds writing instructions for that project. It replaces the `instructions` key from both JSON files.
+- `.gityo.md` in the repository root holds commit writing instructions for that project. It replaces the `commitInstructions` key from both JSON files.
 
-The override is shallow. A `models` map in `.gityo.json` replaces your global `models` entirely instead of adding to it. The same goes for `styles`.
+The override is shallow. A `models` map in `.gityo.json` replaces your global `models` entirely instead of adding to it. The same goes for `commitStyles`.
+
+If you have an existing config, rename `style` to `commitStyle`, `styles` to `commitStyles`, `instructions` to `commitInstructions`, and `autoAcceptMessage` to `autoAcceptCommitMessage`.
 
 To print the config paths, run:
 
@@ -161,18 +163,18 @@ Here's a config with every key:
       "model": "gpt-5-nano"
     }
   },
-  "style": "concise",
-  "styles": {
+  "commitStyle": "concise",
+  "commitStyles": {
     "team": "Use conventional commits. Keep the subject under 72 characters.",
     "release": {
       "path": ".gityo/release-style.md"
     }
   },
-  "autoAcceptMessage": false,
+  "autoAcceptCommitMessage": false,
   "postCommand": "push",
   "autoRunPostCommand": false,
-  "instructions": "Write short, clear commit messages.",
-  "prTitleStyle": "conventional",
+  "commitInstructions": "Write short, clear commit messages.",
+  "prTitleStyle": "default",
   "prBodyStyle": "concise",
   "maxDiffTokens": 24000,
   "perFileCap": 400
@@ -181,10 +183,10 @@ Here's a config with every key:
 
 Keys not covered in other sections:
 
-- `autoAcceptMessage` commits the generated message without asking, like `--generate`. Defaults to `false`.
+- `autoAcceptCommitMessage` commits the generated message without asking, like `--generate`. Defaults to `false`.
 - `postCommand` is `"push"`, `"push-and-pull"`, or `null` to skip it. Defaults to `"push"`.
 - `autoRunPostCommand` runs the post-commit command without asking, like `--post`. Defaults to `false`.
-- `instructions` adds your own guidance to the commit prompt. Use a string or `{ "path": "..." }` to load it from a file.
+- `commitInstructions` adds your own guidance to the commit prompt. Use a string or `{ "path": "..." }` to load it from a file.
 
 A `.gityo.md` file looks like this:
 
@@ -204,13 +206,13 @@ A style is the base commit convention gityo asks the model to follow. There are 
 - `plain` writes one short imperative subject line with no conventional prefix.
 - `gitmoji` puts a gitmoji in front of a conventional subject.
 
-gityo picks the style from `--style`, then the `style` key, then falls back to `default`:
+gityo picks the style from `--style`, then the `commitStyle` key, then falls back to `default`:
 
 ```bash
 gityo --style team --generate
 ```
 
-Add your own under `styles`. A style is either inline text or `{ "path": "..." }` pointing to a prompt file. If you name one after a built-in, yours replaces it. gityo resolves `path` from the directory you run it in, not from the config file's location.
+Add your own under `commitStyles`. A style is either inline text or `{ "path": "..." }` pointing to a prompt file. If you name one after a built-in, yours replaces it. gityo resolves `path` from the directory you run it in, not from the config file's location.
 
 ### Pull request styles
 
@@ -218,8 +220,8 @@ Pull request titles and bodies have their own styles.
 
 Title styles:
 
-- `default` is a short, specific imperative title.
-- `conventional` uses the conventional commits format, `type(scope): subject`.
+- `default` uses the conventional commits format, `type(scope): subject`.
+- `plain` is a short, specific imperative title with no conventional prefix or emoji.
 
 Body styles:
 
@@ -230,10 +232,10 @@ Body styles:
 Set defaults with `prTitleStyle` and `prBodyStyle`, or pick per run:
 
 ```bash
-gityo-pr-create --title-style conventional --body-style concise
+gityo-pr-create --title-style plain --body-style concise
 ```
 
-Custom styles go under `prTitleStyles` and `prBodyStyles`. They work like commit `styles`.
+Custom styles go under `prTitleStyles` and `prBodyStyles`. They work like `commitStyles`.
 
 ### Large changes
 

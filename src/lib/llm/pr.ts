@@ -2,13 +2,13 @@ import { generateText, type LanguageModel } from 'ai'
 import prBodyConcise from './prompts/pr-body-concise.md?raw'
 import prBodyDefault from './prompts/pr-body-default.md?raw'
 import prBodyVerbose from './prompts/pr-body-verbose.md?raw'
-import prTitleConventional from './prompts/pr-title-conventional.md?raw'
 import prTitleDefault from './prompts/pr-title-default.md?raw'
+import prTitlePlain from './prompts/pr-title-plain.md?raw'
 import prPrompt from './prompts/pr.md?raw'
 
 export const PR_TITLE_STYLES: Record<string, string> = {
   default: prTitleDefault,
-  conventional: prTitleConventional,
+  plain: prTitlePlain,
 }
 
 export const PR_BODY_STYLES: Record<string, string> = {

@@ -20,10 +20,10 @@ export async function loadConfig(cwd = process.cwd()) {
   return resolveConfig({
     ...(globalConfig ?? {}),
     ...(projectConfig ?? {}),
-    instructions:
+    commitInstructions:
       projectInstructions ??
-      projectConfig?.instructions ??
-      globalConfig?.instructions,
+      projectConfig?.commitInstructions ??
+      globalConfig?.commitInstructions,
   })
 }
 

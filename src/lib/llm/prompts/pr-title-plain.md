@@ -1,0 +1,5 @@
+- Maximum 72 characters
+- Imperative mood, no trailing period
+- No conventional commit prefix or emoji
+- Describe the overall change, not a single commit
+- Be specific about the affected areas

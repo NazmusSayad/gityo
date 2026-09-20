@@ -51,17 +51,17 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   const languageModel = resolveLanguageModel(modelConfig)
 
-  const styleKey = options.style ?? config.style ?? 'default'
-  const style = await resolveStyle(styleKey, config.styles)
+  const styleKey = options.style ?? config.commitStyle ?? 'default'
+  const style = await resolveStyle(styleKey, config.commitStyles)
   if (!style) {
-    const availableStyles = getStyleKeys(config.styles).join(', ')
+    const availableStyles = getStyleKeys(config.commitStyles).join(', ')
     throw new Error(
       `Style '${styleKey}' is not configured. Available styles: ${availableStyles}.`
     )
   }
 
-  const instructions = config.instructions
-    ? await resolveInstructionContent(config.instructions)
+  const instructions = config.commitInstructions
+    ? await resolveInstructionContent(config.commitInstructions)
     : null
 
   const forceLLMGenerate = options.generate || options.yolo

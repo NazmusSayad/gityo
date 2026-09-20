@@ -26,9 +26,9 @@ export const configSchema = z
 
     models: z.record(z.string().min(1), modelSchema),
 
-    instructions: instructionSchema,
-    style: z.string().min(1),
-    styles: z.record(z.string().min(1), instructionSchema),
+    commitInstructions: instructionSchema,
+    commitStyle: z.string().min(1),
+    commitStyles: z.record(z.string().min(1), instructionSchema),
 
     prTitleStyle: z.string().min(1),
     prBodyStyle: z.string().min(1),
@@ -38,7 +38,7 @@ export const configSchema = z
     maxDiffTokens: z.number().int().min(1000),
     perFileCap: z.number().int().min(50),
 
-    autoAcceptMessage: z.boolean(),
+    autoAcceptCommitMessage: z.boolean(),
     autoRunPostCommand: z.boolean(),
     postCommand: z.enum(['push', 'push-and-pull']).nullable(),
   })
@@ -50,9 +50,9 @@ export function resolveConfig(input: unknown) {
   return {
     models: parsed.models,
 
-    style: parsed.style,
-    styles: parsed.styles,
-    instructions: parsed.instructions,
+    commitStyle: parsed.commitStyle,
+    commitStyles: parsed.commitStyles,
+    commitInstructions: parsed.commitInstructions,
 
     prTitleStyle: parsed.prTitleStyle,
     prBodyStyle: parsed.prBodyStyle,
@@ -62,7 +62,7 @@ export function resolveConfig(input: unknown) {
     maxDiffTokens: parsed.maxDiffTokens,
     perFileCap: parsed.perFileCap,
 
-    autoAcceptCommitMessage: parsed.autoAcceptMessage ?? false,
+    autoAcceptCommitMessage: parsed.autoAcceptCommitMessage ?? false,
     autoRunPostCommand: parsed.autoRunPostCommand ?? false,
     postCommand:
       parsed.postCommand === undefined ? ('push' as const) : parsed.postCommand,
