@@ -10,6 +10,7 @@ import { showStylesController } from './controllers/styles'
 import { handleError } from './lib/handle-error'
 
 const app = new Command()
+  .enablePositionalOptions()
   .name('gityo')
   .description(
     'Stage changes, generate a commit message, create a commit, and run a post-commit git command.'
