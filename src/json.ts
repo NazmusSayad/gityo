@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { configSchema } from './schema'
+import { configSchema } from './schema.js'
 
 const outputPath = path.resolve('./schema.json')
 

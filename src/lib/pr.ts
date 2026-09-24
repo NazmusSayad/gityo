@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import { createRenderer } from 'markdansi'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { DEFAULT_MAX_DIFF_TOKENS, estimateTokens } from './diff'
+import { DEFAULT_MAX_DIFF_TOKENS, estimateTokens } from './diff.js'
 import {
   createPullRequest as createPullRequestApi,
   fetchCompare,
@@ -11,13 +11,17 @@ import {
   getDefaultBranch,
   type CompareResult,
   type PullRequest,
-} from './gh'
-import { resolveLanguageModel, resolveModelConfig } from './llm/model'
-import { generatePullRequest, PR_BODY_STYLES, PR_TITLE_STYLES } from './llm/pr'
-import { loadConfig } from './load-config'
-import { acceptGenerated } from './prompts'
-import { runWithLoading } from './run-with-loading'
-import { exec } from './shell'
+} from './gh.js'
+import { resolveLanguageModel, resolveModelConfig } from './llm/model.js'
+import {
+  generatePullRequest,
+  PR_BODY_STYLES,
+  PR_TITLE_STYLES,
+} from './llm/pr.js'
+import { loadConfig } from './load-config.js'
+import { acceptGenerated } from './prompts.js'
+import { runWithLoading } from './run-with-loading.js'
+import { exec } from './shell.js'
 
 const PR_URL_PATTERN = /https:\/\/[^\s]+\/pull\/(\d+)/
 const PR_RENDER_WIDTH = 80

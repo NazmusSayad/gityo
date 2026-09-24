@@ -1,5 +1,5 @@
 import { generateText, type LanguageModel } from 'ai'
-import { PR_BODY_PROMPTS, PR_TITLE_PROMPTS } from './prompts-registry'
+import { PR_BODY_PROMPTS, PR_TITLE_PROMPTS } from './prompts-registry.js'
 import prPrompt from './prompts/pr.md?raw'
 
 export const PR_TITLE_STYLES: Record<string, string> = Object.fromEntries(

@@ -1,5 +1,5 @@
 import type { SimpleGit } from 'simple-git'
-import { getCommitDiff, type DiffScope } from './git'
+import { getCommitDiff, type DiffScope } from './git.js'
 
 export const DEFAULT_MAX_DIFF_TOKENS = 24000
 export const DEFAULT_PER_FILE_CAP = 400

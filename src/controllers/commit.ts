@@ -8,28 +8,28 @@ import {
   estimateTokens,
   minimizeDiff,
   splitDiffIntoChunks,
-} from '../lib/diff'
+} from '../lib/diff.js'
 import {
   getChangedFiles,
   getCommitDiff,
   getGit,
   getStagedFiles,
   type DiffScope,
-} from '../lib/git'
+} from '../lib/git.js'
 import {
   generateCommitMessage,
   generateCommitMessageFromSummaries,
   summarizeChanges,
-} from '../lib/llm/message'
-import { resolveLanguageModel, resolveModelConfig } from '../lib/llm/model'
+} from '../lib/llm/message.js'
+import { resolveLanguageModel, resolveModelConfig } from '../lib/llm/model.js'
 import {
   getStyleKeys,
   resolveInstructionContent,
   resolveStyle,
-} from '../lib/llm/style'
-import { loadConfig } from '../lib/load-config'
-import { acceptGenerated, selectionTheme } from '../lib/prompts'
-import { runWithLoading } from '../lib/run-with-loading'
+} from '../lib/llm/style.js'
+import { loadConfig } from '../lib/load-config.js'
+import { acceptGenerated, selectionTheme } from '../lib/prompts.js'
+import { runWithLoading } from '../lib/run-with-loading.js'
 
 type MainControllerOptions = {
   generate?: boolean

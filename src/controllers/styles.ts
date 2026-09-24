@@ -5,9 +5,9 @@ import {
   PR_BODY_PROMPTS,
   PR_TITLE_PROMPTS,
   type Prompt,
-} from '../lib/llm/prompts-registry'
-import { loadConfig } from '../lib/load-config'
-import type { instructionSchema } from '../schema'
+} from '../lib/llm/prompts-registry.js'
+import { loadConfig } from '../lib/load-config.js'
+import type { instructionSchema } from '../schema.js'
 
 type StyleEntry = {
   key: string

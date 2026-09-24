@@ -2,7 +2,7 @@ import path from 'node:path'
 import {
   GLOBAL_CONFIG_FILE_PATH,
   PROJECT_CONFIG_FILE_NAME,
-} from '../lib/load-config'
+} from '../lib/load-config.js'
 
 const CONFIG_SCHEMA_URL =
   'https://github.com/NazmusSayad/gityo/raw/refs/heads/schema/schema.json'

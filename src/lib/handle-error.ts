@@ -1,5 +1,5 @@
 import chalk from 'chalk'
-import { AppUserCanceledError } from './errors'
+import { AppUserCanceledError } from './errors.js'
 
 export function handleError(fn: () => Promise<void> | void) {
   Promise.resolve()

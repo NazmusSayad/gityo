@@ -1,4 +1,4 @@
-import { exec, execInherit } from './shell'
+import { exec, execInherit } from './shell.js'
 
 export type PullRequest = {
   number: number

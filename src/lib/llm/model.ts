@@ -1,7 +1,7 @@
 import type { LanguageModel } from 'ai'
 import { z } from 'zod'
-import { modelSchema } from '../../schema'
-import { SUPPORTED_PROVIDERS } from './ai-sdk'
+import { modelSchema } from '../../schema.js'
+import { SUPPORTED_PROVIDERS } from './ai-sdk.js'
 
 export function resolveModelConfig(
   models: Record<string, z.infer<typeof modelSchema>> | undefined,

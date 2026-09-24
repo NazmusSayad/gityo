@@ -1,9 +1,9 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
-import { getGit } from '../lib/git'
-import { getCurrentBranch } from '../lib/pr'
-import { selectionTheme } from '../lib/prompts'
-import { getCommitFiles, mainController, type CommitScope } from './commit'
+import { getGit } from '../lib/git.js'
+import { getCurrentBranch } from '../lib/pr.js'
+import { selectionTheme } from '../lib/prompts.js'
+import { getCommitFiles, mainController, type CommitScope } from './commit.js'
 
 type LocalChangesOptions = {
   yolo?: boolean

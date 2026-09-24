@@ -1,14 +1,18 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
-import { findPullRequest, mergePullRequest, type MergeMethod } from '../lib/gh'
-import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
+import {
+  findPullRequest,
+  mergePullRequest,
+  type MergeMethod,
+} from '../lib/gh.js'
+import { buildPullRequestSystemPrompt } from '../lib/llm/pr.js'
 import {
   createPullRequest,
   loadPullRequestContext,
   resolvePrBranches,
-} from '../lib/pr'
-import { mergeTheme } from '../lib/prompts'
-import { handleUncommittedChanges } from './local-changes'
+} from '../lib/pr.js'
+import { mergeTheme } from '../lib/prompts.js'
+import { handleUncommittedChanges } from './local-changes.js'
 
 type PrMergeControllerOptions = {
   mergeMethod?: MergeMethod

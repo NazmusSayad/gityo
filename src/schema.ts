@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { PROVIDER_NPM_PACKAGES } from './lib/llm/ai-sdk'
+import { PROVIDER_NPM_PACKAGES } from './lib/llm/ai-sdk.js'
 
 export const modelSchema = z.object({
   npm: z.enum(PROVIDER_NPM_PACKAGES).optional(),

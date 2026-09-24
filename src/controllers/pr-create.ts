@@ -1,11 +1,11 @@
-import { findPullRequest, openPullRequest } from '../lib/gh'
-import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
+import { findPullRequest, openPullRequest } from '../lib/gh.js'
+import { buildPullRequestSystemPrompt } from '../lib/llm/pr.js'
 import {
   createPullRequest,
   loadPullRequestContext,
   resolvePrBranches,
-} from '../lib/pr'
-import { handleUncommittedChanges } from './local-changes'
+} from '../lib/pr.js'
+import { handleUncommittedChanges } from './local-changes.js'
 
 type PrCreateControllerOptions = {
   model?: string

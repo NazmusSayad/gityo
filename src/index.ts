@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 import { Command } from '@commander-js/extra-typings'
-import pkg from '../package.json'
-import { mainController } from './controllers/commit'
-import { showConfigController } from './controllers/config'
-import { createPullRequestController } from './controllers/pr-create'
-import { mergePullRequestController } from './controllers/pr-merge'
-import { showStylesController } from './controllers/styles'
-import { handleError } from './lib/handle-error'
+import pkg from '../package.json' with { type: 'json' }
+import { mainController } from './controllers/commit.js'
+import { showConfigController } from './controllers/config.js'
+import { createPullRequestController } from './controllers/pr-create.js'
+import { mergePullRequestController } from './controllers/pr-merge.js'
+import { showStylesController } from './controllers/styles.js'
+import { handleError } from './lib/handle-error.js'
 
 const app = new Command()
   .enablePositionalOptions()

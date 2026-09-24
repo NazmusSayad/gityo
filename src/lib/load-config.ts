@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { configSchema, resolveConfig } from '../schema'
+import { configSchema, resolveConfig } from '../schema.js'
 
 export const PROJECT_CONFIG_FILE_NAME = '.gityo.json'
 export const GLOBAL_CONFIG_FILE_PATH = path.join(

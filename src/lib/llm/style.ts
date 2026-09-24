@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { z } from 'zod'
-import { instructionSchema } from '../../schema'
-import { COMMIT_STYLE_PROMPTS } from './prompts-registry'
+import { instructionSchema } from '../../schema.js'
+import { COMMIT_STYLE_PROMPTS } from './prompts-registry.js'
 
 const BUILTIN_STYLES: Record<string, string> = Object.fromEntries(
   Object.entries(COMMIT_STYLE_PROMPTS).map((entry) => [
