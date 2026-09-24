@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "nodenext",
     "declaration": true,
     "outDir": "dist",
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "strict": true,
     "noEmit": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
