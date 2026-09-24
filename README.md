@@ -104,6 +104,5 @@ Styles control how commit messages, PR titles, and PR bodies are written. Choose
 
 - Run `gityo config styles` to view commit, PR title, and PR body styles.
 - Add `.gityo.json` to a repository for project-specific settings.
-- Add `.gityo.md` for project-specific commit instructions.
 - Run `gityo config` to see config locations.
 - Use the config schema for available settings and `--help` on each command for its options.

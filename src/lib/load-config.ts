@@ -11,19 +11,30 @@ export const GLOBAL_CONFIG_FILE_PATH = path.join(
 )
 
 export async function loadConfig(cwd = process.cwd()) {
-  const [globalConfig, projectConfig, projectInstructions] = await Promise.all([
+  const [globalConfig, projectConfig] = await Promise.all([
     readGlobalConfig(),
     readProjectConfig(cwd),
-    readInstructionsFile(path.join(cwd, '.gityo.md')),
   ])
 
   return resolveConfig({
     ...(globalConfig ?? {}),
     ...(projectConfig ?? {}),
-    commitInstructions:
-      projectInstructions ??
-      projectConfig?.commitInstructions ??
-      globalConfig?.commitInstructions,
+    models: {
+      ...globalConfig?.models,
+      ...projectConfig?.models,
+    },
+    commitStyles: {
+      ...globalConfig?.commitStyles,
+      ...projectConfig?.commitStyles,
+    },
+    prTitleStyles: {
+      ...globalConfig?.prTitleStyles,
+      ...projectConfig?.prTitleStyles,
+    },
+    prBodyStyles: {
+      ...globalConfig?.prBodyStyles,
+      ...projectConfig?.prBodyStyles,
+    },
   })
 }
 
@@ -65,24 +76,6 @@ async function readConfigFile(filePath: string) {
   }
 
   return result.data
-}
-
-async function readInstructionsFile(filePath: string) {
-  let contents: string
-
-  try {
-    contents = await readFile(filePath, 'utf8')
-  } catch (error) {
-    if (isMissingFileError(error)) {
-      return undefined
-    }
-
-    throw error
-  }
-
-  const value = contents.trim()
-
-  return value.length > 0 ? value : undefined
 }
 
 function isMissingFileError(error: unknown) {
