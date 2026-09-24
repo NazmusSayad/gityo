@@ -108,7 +108,6 @@ export async function releaseController(
       `${commits.length} commit(s) since ${previousTag ?? 'the first commit'}`
     )
   )
-  console.log('')
 
   let notes = ''
   while (true) {
