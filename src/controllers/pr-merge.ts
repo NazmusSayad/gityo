@@ -15,6 +15,7 @@ type PrMergeControllerOptions = {
   titleStyle?: string
   bodyStyle?: string
   yolo?: boolean
+  all?: boolean
 }
 
 export async function mergePullRequestController(
@@ -33,6 +34,7 @@ export async function mergePullRequestController(
 
   await handleUncommittedChanges(branches.head, {
     yolo: options.yolo ?? false,
+    scope: options.all ? 'everything' : 'staged-or-changes',
   })
 
   let pullRequest = await findPullRequest(branches.base, branches.head)

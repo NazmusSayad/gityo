@@ -1,12 +1,13 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
-import { getChangedFiles, getGit } from '../lib/git'
+import { getGit } from '../lib/git'
 import { getCurrentBranch } from '../lib/pr'
 import { selectionTheme } from '../lib/prompts'
-import { mainController } from './commit'
+import { getCommitFiles, mainController, type CommitScope } from './commit'
 
 type LocalChangesOptions = {
   yolo?: boolean
+  scope?: CommitScope
 }
 
 export async function handleUncommittedChanges(
@@ -20,15 +21,18 @@ export async function handleUncommittedChanges(
   }
 
   const { git } = await getGit()
-  const files = await getChangedFiles(git)
+  const scope = options.scope ?? 'staged-or-changes'
+  const { diffScope, files } = await getCommitFiles(git, scope)
 
   if (files.length === 0) {
     return
   }
 
+  const label = diffScope === 'staged' ? 'staged' : 'uncommitted'
+
   console.log(
     chalk.yellow(
-      `• You have ${files.length} uncommitted local change(s):\n${files.join('\n')}`
+      `• You have ${files.length} ${label} local change(s):\n${files.join('\n')}`
     )
   )
   console.log('')
@@ -41,12 +45,16 @@ export async function handleUncommittedChanges(
     })
 
     if (!shouldPush) {
-      console.log(chalk.dim('Ignoring uncommitted local changes.'))
+      console.log(chalk.dim(`Ignoring ${label} local changes.`))
       console.log('')
       return
     }
   }
 
-  await mainController({ yolo: options.yolo, push: true })
+  await mainController({
+    yolo: options.yolo,
+    push: true,
+    scope,
+  })
   console.log('')
 }

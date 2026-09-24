@@ -9,7 +9,13 @@ import {
   minimizeDiff,
   splitDiffIntoChunks,
 } from '../lib/diff'
-import { getChangedFiles, getCommitDiff, getGit } from '../lib/git'
+import {
+  getChangedFiles,
+  getCommitDiff,
+  getGit,
+  getStagedFiles,
+  type DiffScope,
+} from '../lib/git'
 import {
   generateCommitMessage,
   generateCommitMessageFromSummaries,
@@ -33,7 +39,10 @@ type MainControllerOptions = {
   post?: boolean
   yolo?: boolean
   push?: boolean
+  scope?: CommitScope
 }
+
+export type CommitScope = 'everything' | 'staged-only' | 'staged-or-changes'
 
 const MAP_CONCURRENCY = 3
 const PROMPT_RESERVE_TOKENS = 800
@@ -72,12 +81,15 @@ export async function mainController(options: MainControllerOptions = {}) {
     throw new Error('Provided commit message input cannot be empty.')
   }
 
-  const files = await getChangedFiles(git)
+  const { diffScope, files } = await getCommitFiles(
+    git,
+    options.scope ?? 'staged-or-changes'
+  )
   if (files.length === 0) {
     return console.log('No changed files found.')
   }
 
-  const { diff, hasStaged } = await getCommitDiff(git)
+  const diff = await getCommitDiff(git, diffScope)
 
   if (finalCommitMessage.length > 0) {
     console.log(chalk.yellow('✓ Using direct commit message'))
@@ -92,6 +104,7 @@ export async function mainController(options: MainControllerOptions = {}) {
         () =>
           generateMessage({
             git,
+            scope: diffScope,
             languageModel,
             style,
             instructions,
@@ -130,7 +143,7 @@ export async function mainController(options: MainControllerOptions = {}) {
     console.log(chalk.green('✓ Committing changes'))
   }
 
-  if (!hasStaged) {
+  if (diffScope === 'all') {
     await git.add(['-A'])
   }
 
@@ -167,8 +180,32 @@ export async function mainController(options: MainControllerOptions = {}) {
   }
 }
 
+export async function getCommitFiles(git: SimpleGit, commitScope: CommitScope) {
+  const stagedFiles = await getStagedFiles(git)
+
+  let diffScope: DiffScope
+  if (commitScope === 'everything') {
+    diffScope = 'all'
+  } else if (commitScope === 'staged-only') {
+    if (stagedFiles.length === 0) {
+      throw new Error('Nothing is staged.')
+    }
+    diffScope = 'staged'
+  } else if (commitScope === 'staged-or-changes') {
+    diffScope = stagedFiles.length > 0 ? 'staged' : 'all'
+  } else {
+    throw new Error(`Unknown commit scope '${commitScope as string}'.`)
+  }
+
+  const files =
+    diffScope === 'staged' ? stagedFiles : await getChangedFiles(git)
+
+  return { diffScope, files }
+}
+
 type GenerateMessageOptions = {
   git: SimpleGit
+  scope: DiffScope
   languageModel: LanguageModel
   style: string
   instructions: string | null
@@ -186,6 +223,7 @@ async function generateMessage(options: GenerateMessageOptions) {
   }
 
   const { toc, body } = await minimizeDiff(git, {
+    scope: options.scope,
     perFileCap: options.perFileCap,
     allFiles: options.files,
   })

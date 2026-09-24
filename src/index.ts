@@ -33,6 +33,11 @@ const app = new Command()
   )
   .option('-p, --post', 'Run the post-commit git command without asking.')
   .option(
+    '-S, --staged',
+    'Commit only staged files. Fails if nothing is staged.'
+  )
+  .option('-A, --all', 'Commit all changes, not just staged files.')
+  .option(
     '-y, --yolo',
     'Skip all questions, and generate message, commit, run post command. [Will fail if no model available]'
   )
@@ -43,7 +48,21 @@ const app = new Command()
       process.exit(1)
     }
 
-    handleError(() => mainController(options))
+    if (options.staged && options.all) {
+      console.error('Cannot use --staged and --all together.')
+      process.exit(1)
+    }
+
+    handleError(() =>
+      mainController({
+        ...options,
+        scope: options.all
+          ? 'everything'
+          : options.staged
+            ? 'staged-only'
+            : 'staged-or-changes',
+      })
+    )
   })
 
 app
@@ -69,6 +88,11 @@ app
   )
   .option('-p, --post', 'Run the post-commit git command without asking.')
   .option(
+    '-S, --staged',
+    'Commit only staged files. Fails if nothing is staged.'
+  )
+  .option('-A, --all', 'Commit all changes, not just staged files.')
+  .option(
     '-y, --yolo',
     'Skip all questions, and generate message, commit, run post command. [Will fail if no model available]'
   )
@@ -78,7 +102,21 @@ app
       process.exit(1)
     }
 
-    handleError(() => mainController(options))
+    if (options.staged && options.all) {
+      console.error('Cannot use --staged and --all together.')
+      process.exit(1)
+    }
+
+    handleError(() =>
+      mainController({
+        ...options,
+        scope: options.all
+          ? 'everything'
+          : options.staged
+            ? 'staged-only'
+            : 'staged-or-changes',
+      })
+    )
   })
 
 const pr = app
@@ -110,6 +148,10 @@ pr.command('create')
   .option(
     '-y, --yolo',
     'Create the pull request without asking for confirmation.'
+  )
+  .option(
+    '-A, --all',
+    'Commit all local changes, not just staged files, before continuing.'
   )
   .option('-w, --web', 'Open the pull request in a browser.')
   .action((baseBranch, headBranch, options) => {
@@ -143,6 +185,10 @@ pr.command('merge')
   .option(
     '-y, --yolo',
     'Merge the pull request without asking for confirmation.'
+  )
+  .option(
+    '-A, --all',
+    'Commit all local changes, not just staged files, before continuing.'
   )
   .action((baseBranch, headBranch, options) => {
     handleError(() =>

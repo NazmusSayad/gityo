@@ -15,29 +15,37 @@ export async function getGit(cwd = process.cwd()) {
   }
 }
 
+export type DiffScope = 'staged' | 'all'
+
+export async function getStagedFiles(git: SimpleGit) {
+  const staged = await git.raw([
+    'diff',
+    '--cached',
+    '--name-only',
+    '--diff-filter=ACDMRTUXB',
+    '-z',
+  ])
+
+  return splitNull(staged).sort((left, right) => left.localeCompare(right))
+}
+
 export async function getChangedFiles(git: SimpleGit) {
   const [unstaged, staged, untracked] = await Promise.all([
     git.raw(['diff', '--name-only', '--diff-filter=ACDMRTUXB', '-z']),
-    git.raw([
-      'diff',
-      '--cached',
-      '--name-only',
-      '--diff-filter=ACDMRTUXB',
-      '-z',
-    ]),
+    getStagedFiles(git),
     git.raw(['ls-files', '--others', '--exclude-standard', '-z']),
   ])
 
   return Array.from(
-    new Set([
-      ...splitNull(staged),
-      ...splitNull(unstaged),
-      ...splitNull(untracked),
-    ])
+    new Set([...staged, ...splitNull(unstaged), ...splitNull(untracked)])
   ).sort((left, right) => left.localeCompare(right))
 }
 
-export async function getCommitDiff(git: SimpleGit, contextLines = 3) {
+export async function getCommitDiff(
+  git: SimpleGit,
+  scope: DiffScope,
+  contextLines = 3
+) {
   const unified = [`-U${contextLines}`]
   const staged = await git.raw([
     'diff',
@@ -46,12 +54,22 @@ export async function getCommitDiff(git: SimpleGit, contextLines = 3) {
     ...unified,
   ])
 
-  if (staged.trim().length > 0) {
-    return { diff: staged, hasStaged: true }
+  if (scope === 'staged') {
+    return staged
   }
 
+  if (scope !== 'all') {
+    throw new Error(`Unknown commit scope '${scope as string}'.`)
+  }
+
+  const hasStaged = staged.trim().length > 0
   const [unstaged, untracked] = await Promise.all([
-    git.raw(['diff', '--no-ext-diff', ...unified]),
+    git.raw([
+      'diff',
+      ...(hasStaged ? ['HEAD'] : []),
+      '--no-ext-diff',
+      ...unified,
+    ]),
     git.raw(['ls-files', '--others', '--exclude-standard', '-z']),
   ])
 
@@ -61,12 +79,9 @@ export async function getCommitDiff(git: SimpleGit, contextLines = 3) {
     )
   )
 
-  return {
-    diff: [unstaged, ...untrackedDiffs]
-      .filter((part) => part.length > 0)
-      .join('\n'),
-    hasStaged: false,
-  }
+  return [unstaged, ...untrackedDiffs]
+    .filter((part) => part.length > 0)
+    .join('\n')
 }
 
 function splitNull(output: string) {

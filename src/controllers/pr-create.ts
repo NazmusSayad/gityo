@@ -12,6 +12,7 @@ type PrCreateControllerOptions = {
   titleStyle?: string
   bodyStyle?: string
   yolo?: boolean
+  all?: boolean
   web?: boolean
 }
 
@@ -31,6 +32,7 @@ export async function createPullRequestController(
 
   await handleUncommittedChanges(branches.head, {
     yolo: options.yolo ?? false,
+    scope: options.all ? 'everything' : 'staged-or-changes',
   })
 
   const pullRequest = await createPullRequest({

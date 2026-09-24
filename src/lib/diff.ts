@@ -1,5 +1,5 @@
 import type { SimpleGit } from 'simple-git'
-import { getCommitDiff } from './git'
+import { getCommitDiff, type DiffScope } from './git'
 
 export const DEFAULT_MAX_DIFF_TOKENS = 24000
 export const DEFAULT_PER_FILE_CAP = 400
@@ -33,9 +33,9 @@ type MinimizedDiff = {
 
 export async function minimizeDiff(
   git: SimpleGit,
-  options: { perFileCap: number; allFiles: string[] }
+  options: { scope: DiffScope; perFileCap: number; allFiles: string[] }
 ): Promise<MinimizedDiff> {
-  const { diff } = await getCommitDiff(git, MINIMIZED_CONTEXT_LINES)
+  const diff = await getCommitDiff(git, options.scope, MINIMIZED_CONTEXT_LINES)
   const sections = splitFileSections(diff).map(parseSection)
 
   const kept: FileSection[] = []
