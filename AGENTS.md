@@ -1,0 +1,1 @@
+- Never update docs (README, etc.) unless explicitly requested.

@@ -24,7 +24,7 @@ const app = new Command()
     'Commit message style key to use (defaults to "default").'
   )
   .option(
-    '-m, --model <model>',
+    '--model <model>',
     'Model key from config to use (defaults to "default").'
   )
   .option(
@@ -79,7 +79,7 @@ app
     'Commit message style key to use (defaults to "default").'
   )
   .option(
-    '-m, --model <model>',
+    '--model <model>',
     'Model key from config to use (defaults to "default").'
   )
   .option(
@@ -134,7 +134,7 @@ pr.command('create')
     'Head branch with the changes (defaults to the current branch).'
   )
   .option(
-    '-m, --model <model>',
+    '--model <model>',
     'Model key from config to use (defaults to "default").'
   )
   .option(
@@ -171,7 +171,7 @@ pr.command('merge')
     'Head branch with the changes (defaults to the current branch).'
   )
   .option(
-    '-m, --model <model>',
+    '--model <model>',
     'Model key from config to use (defaults to "default").'
   )
   .option(
@@ -190,9 +190,25 @@ pr.command('merge')
     '-A, --all',
     'Commit all local changes, not just staged files, before continuing.'
   )
+  .option('-m, --merge', 'Merge the commits with the base branch (default).')
+  .option('-r, --rebase', 'Rebase the commits onto the base branch.')
+  .option('-s, --squash', 'Squash the commits into one commit.')
   .action((baseBranch, headBranch, options) => {
+    const methods = [options.merge, options.rebase, options.squash]
+    if (methods.filter(Boolean).length > 1) {
+      console.error('Use only one of --merge, --rebase, or --squash.')
+      process.exit(1)
+    }
+
     handleError(() =>
-      mergePullRequestController(baseBranch, headBranch, options)
+      mergePullRequestController(baseBranch, headBranch, {
+        ...options,
+        mergeMethod: options.rebase
+          ? 'rebase'
+          : options.squash
+            ? 'squash'
+            : 'merge',
+      })
     )
   })
 

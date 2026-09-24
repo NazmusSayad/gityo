@@ -1,6 +1,6 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
-import { findPullRequest, mergePullRequest } from '../lib/gh'
+import { findPullRequest, mergePullRequest, type MergeMethod } from '../lib/gh'
 import { buildPullRequestSystemPrompt } from '../lib/llm/pr'
 import {
   createPullRequest,
@@ -11,6 +11,7 @@ import { mergeTheme } from '../lib/prompts'
 import { handleUncommittedChanges } from './local-changes'
 
 type PrMergeControllerOptions = {
+  mergeMethod?: MergeMethod
   model?: string
   titleStyle?: string
   bodyStyle?: string
@@ -69,5 +70,5 @@ export async function mergePullRequestController(
     }
   }
 
-  await mergePullRequest(pullRequest.number)
+  await mergePullRequest(pullRequest.number, options.mergeMethod ?? 'merge')
 }

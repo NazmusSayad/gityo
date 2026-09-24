@@ -95,8 +95,10 @@ export async function createPullRequest(input: {
   ])
 }
 
-export async function mergePullRequest(number: number) {
-  await execInherit('gh', ['pr', 'merge', String(number), '--merge'])
+export type MergeMethod = 'merge' | 'rebase' | 'squash'
+
+export async function mergePullRequest(number: number, method: MergeMethod) {
+  await execInherit('gh', ['pr', 'merge', String(number), `--${method}`])
 }
 
 export async function openPullRequest(number: number) {
