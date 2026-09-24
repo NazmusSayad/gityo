@@ -6,6 +6,7 @@ import { mainController } from './controllers/commit.js'
 import { showConfigController } from './controllers/config.js'
 import { createPullRequestController } from './controllers/pr-create.js'
 import { mergePullRequestController } from './controllers/pr-merge.js'
+import { releaseController } from './controllers/release.js'
 import { showStylesController } from './controllers/styles.js'
 import { handleError } from './lib/handle-error.js'
 
@@ -212,6 +213,26 @@ pr.command('merge')
               : undefined,
       })
     )
+  })
+
+app
+  .command('release')
+  .description('Create a GitHub release with AI-generated release notes.')
+  .argument('[tag]', 'Release tag to create (asks when omitted).')
+  .option(
+    '--model <model>',
+    'Model key from config to use (defaults to "default").'
+  )
+  .option(
+    '-y, --yolo',
+    'Create the release without asking for confirmation (requires a tag).'
+  )
+  .option(
+    '-f, --force',
+    'Recreate the release without asking if it already exists.'
+  )
+  .action((tag, options) => {
+    handleError(() => releaseController(tag, options))
   })
 
 const config = app
