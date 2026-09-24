@@ -70,5 +70,8 @@ export async function mergePullRequestController(
     }
   }
 
-  await mergePullRequest(pullRequest.number, options.mergeMethod ?? 'merge')
+  await mergePullRequest(
+    pullRequest.number,
+    options.mergeMethod ?? context.config.prMergeMethod
+  )
 }

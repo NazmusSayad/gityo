@@ -190,7 +190,7 @@ pr.command('merge')
     '-A, --all',
     'Commit all local changes, not just staged files, before continuing.'
   )
-  .option('-m, --merge', 'Merge the commits with the base branch (default).')
+  .option('-m, --merge', 'Merge the commits with the base branch.')
   .option('-r, --rebase', 'Rebase the commits onto the base branch.')
   .option('-s, --squash', 'Squash the commits into one commit.')
   .action((baseBranch, headBranch, options) => {
@@ -203,11 +203,13 @@ pr.command('merge')
     handleError(() =>
       mergePullRequestController(baseBranch, headBranch, {
         ...options,
-        mergeMethod: options.rebase
-          ? 'rebase'
-          : options.squash
-            ? 'squash'
-            : 'merge',
+        mergeMethod: options.merge
+          ? 'merge'
+          : options.rebase
+            ? 'rebase'
+            : options.squash
+              ? 'squash'
+              : undefined,
       })
     )
   })
