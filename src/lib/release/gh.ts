@@ -23,6 +23,53 @@ export async function listReleases(limit: number): Promise<Release[]> {
   )
 }
 
+export type ReleaseCommit = {
+  hash: string
+  date: string
+  authorName: string
+  authorEmail: string
+  message: string
+}
+
+const COMMIT_JQ =
+  '{hash: .sha, date: .commit.author.date, authorName: .commit.author.name, authorEmail: .commit.author.email, message: .commit.message}'
+
+export async function getBranchHeadSha(branch: string) {
+  const output = await exec('gh', [
+    'api',
+    `repos/{owner}/{repo}/commits/${encodeURIComponent(branch)}`,
+    '--jq',
+    '.sha',
+  ])
+
+  return output.trim()
+}
+
+export async function listReleaseCommits(
+  fromTag: string | null,
+  toSha: string
+): Promise<ReleaseCommit[]> {
+  const args =
+    fromTag === null
+      ? [
+          `repos/{owner}/{repo}/commits?sha=${toSha}&per_page=100`,
+          '--jq',
+          `.[] | ${COMMIT_JQ}`,
+        ]
+      : [
+          `repos/{owner}/{repo}/compare/${encodeURIComponent(fromTag)}...${toSha}?per_page=100`,
+          '--jq',
+          `.commits[] | ${COMMIT_JQ}`,
+        ]
+
+  const output = await exec('gh', ['api', '--paginate', ...args])
+
+  return output
+    .split('\n')
+    .filter((line) => line.length > 0)
+    .map((line) => JSON.parse(line) as ReleaseCommit)
+}
+
 export async function releaseExists(tag: string) {
   try {
     await exec('gh', ['release', 'view', tag, '--json', 'tagName'])

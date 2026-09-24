@@ -1,6 +1,6 @@
 import { generateText, isStepCount, type LanguageModel } from 'ai'
 import { estimateTokens } from '../diff.js'
-import type { ReleaseCommit } from './git.js'
+import type { ReleaseCommit } from './gh.js'
 import releasePrompt from './prompt.md?raw'
 import { summarizeChunks } from './summarize.js'
 import { createReleaseTools } from './tools.js'

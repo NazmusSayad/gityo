@@ -10,12 +10,14 @@ import { acceptGenerated, selectionTheme } from '../lib/prompts.js'
 import {
   createRelease,
   deleteRelease,
+  getBranchHeadSha,
+  listReleaseCommits,
   listReleases,
   releaseExists,
 } from '../lib/release/gh.js'
 import {
+  assertLocalCommitsMatch,
   fetchBranchAndTags,
-  getCommitsBetween,
   getRepoRoot,
 } from '../lib/release/git.js'
 import {
@@ -89,8 +91,17 @@ export async function releaseController(
   const previousTag =
     (tagIndex === -1 ? releases[0] : releases[tagIndex + 1])?.tagName ?? null
 
+  const headSha = await getBranchHeadSha(branch)
+  const commits = await runWithLoading('Loading commits from GitHub', () =>
+    listReleaseCommits(previousTag, headSha)
+  )
+
   await runWithLoading('Fetching commits', () => fetchBranchAndTags(branch))
-  const commits = await getCommitsBetween(previousTag, `origin/${branch}`)
+  await assertLocalCommitsMatch(
+    previousTag,
+    headSha,
+    commits.map((commit) => commit.hash)
+  )
 
   console.log(
     chalk.dim(
@@ -133,7 +144,7 @@ export async function releaseController(
     await deleteRelease(tag)
   }
 
-  await createRelease({ tag, target: branch, notes })
+  await createRelease({ tag, target: headSha, notes })
 }
 
 function printRecentReleases(

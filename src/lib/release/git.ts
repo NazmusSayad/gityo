@@ -1,16 +1,5 @@
 import { exec } from '../shell.js'
 
-const FIELD_SEPARATOR = '\x1f'
-const RECORD_SEPARATOR = '\x1e'
-
-export type ReleaseCommit = {
-  hash: string
-  date: string
-  authorName: string
-  authorEmail: string
-  message: string
-}
-
 export async function getRepoRoot() {
   const output = await exec('git', ['rev-parse', '--show-toplevel'])
 
@@ -21,24 +10,33 @@ export async function fetchBranchAndTags(branch: string) {
   await exec('git', ['fetch', 'origin', branch, '--tags', '--force'])
 }
 
-export async function getCommitsBetween(
+export async function assertLocalCommitsMatch(
   fromTag: string | null,
-  toRef: string
-): Promise<ReleaseCommit[]> {
-  const range = fromTag === null ? toRef : `${fromTag}..${toRef}`
-  const output = await exec('git', [
-    'log',
-    `--format=%H${FIELD_SEPARATOR}%aI${FIELD_SEPARATOR}%an${FIELD_SEPARATOR}%ae${FIELD_SEPARATOR}%B${RECORD_SEPARATOR}`,
-    range,
-  ])
+  toSha: string,
+  githubHashes: string[]
+) {
+  for (const ref of fromTag === null ? [toSha] : [fromTag, toSha]) {
+    try {
+      await exec('git', ['cat-file', '-e', `${ref}^{commit}`])
+    } catch {
+      throw new Error(
+        `'${ref}' from GitHub is not in your local repository. Fetch it and try again.`
+      )
+    }
+  }
 
-  return output
-    .split(RECORD_SEPARATOR)
-    .map((record) => record.trim())
-    .filter((record) => record.length > 0)
-    .map((record) => {
-      const [hash, date, authorName, authorEmail, message] =
-        record.split(FIELD_SEPARATOR)
-      return { hash, date, authorName, authorEmail, message: message.trim() }
-    })
+  const range = fromTag === null ? toSha : `${fromTag}..${toSha}`
+  const output = await exec('git', ['rev-list', range])
+  const localHashes = output.split('\n').filter((line) => line.length > 0)
+
+  const githubSet = new Set(githubHashes)
+  const matches =
+    localHashes.length === githubHashes.length &&
+    localHashes.every((hash) => githubSet.has(hash))
+
+  if (!matches) {
+    throw new Error(
+      `Local commits do not match GitHub for ${range}: ${localHashes.length} local, ${githubHashes.length} on GitHub.`
+    )
+  }
 }
