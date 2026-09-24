@@ -63,11 +63,12 @@ export async function listReleaseCommits(
         ]
 
   const output = await exec('gh', ['api', '--paginate', ...args])
-
-  return output
+  const commits = output
     .split('\n')
     .filter((line) => line.length > 0)
     .map((line) => JSON.parse(line) as ReleaseCommit)
+
+  return fromTag === null ? commits : commits.reverse()
 }
 
 export async function releaseExists(tag: string) {
