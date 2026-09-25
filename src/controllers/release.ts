@@ -36,6 +36,7 @@ type ReleaseControllerOptions = {
   model?: string
   yolo?: boolean
   force?: boolean
+  empty?: boolean
   bump?: 'major' | 'minor' | 'patch'
 }
 
@@ -55,13 +56,6 @@ export async function releaseController(
 
   const repoRoot = await getRepoRoot()
   const config = await loadConfig(repoRoot)
-  const languageModel = resolveLanguageModel(
-    resolveModelConfig(
-      config.models,
-      options.model ?? config.releaseModel ?? config.model
-    )
-  )
-
   const releases = await listReleases(100)
 
   let tag = tagArg?.trim() ?? ''
@@ -109,6 +103,36 @@ export async function releaseController(
   if (branch.length === 0) {
     throw new Error('Could not determine the default branch.')
   }
+
+  if (options.empty) {
+    const headSha = await getBranchHeadSha(branch)
+
+    if (
+      !options.yolo &&
+      !(await confirm({
+        message: `Create release ${chalk.yellow.bold(tag)} on ${chalk.yellow.bold(branch)} without notes?`,
+        default: true,
+        theme: selectionTheme,
+      }))
+    ) {
+      console.log('Release creation cancelled.')
+      return
+    }
+
+    if (exists) {
+      await deleteRelease(tag)
+    }
+
+    await createRelease({ tag, target: headSha, notes: '' })
+    return
+  }
+
+  const languageModel = resolveLanguageModel(
+    resolveModelConfig(
+      config.models,
+      options.model ?? config.releaseModel ?? config.model
+    )
+  )
 
   const tagIndex = releases.findIndex((release) => release.tagName === tag)
   const previousTag =

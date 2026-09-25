@@ -231,6 +231,7 @@ app
     '-f, --force',
     'Recreate the release without asking if it already exists.'
   )
+  .option('-e, --empty', 'Create the release without any release notes.')
   .option('--major', 'Bump the major version of the latest release.')
   .option('--minor', 'Bump the minor version of the latest release.')
   .option('--patch', 'Bump the patch version of the latest release.')
