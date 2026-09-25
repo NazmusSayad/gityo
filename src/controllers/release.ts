@@ -32,14 +32,21 @@ type ReleaseControllerOptions = {
   model?: string
   yolo?: boolean
   force?: boolean
+  bump?: 'major' | 'minor' | 'patch'
 }
 
 export async function releaseController(
   tagArg: string | undefined,
   options: ReleaseControllerOptions = {}
 ) {
-  if (options.yolo && tagArg === undefined) {
-    throw new Error('A release tag is required with --yolo.')
+  if (options.bump && tagArg !== undefined) {
+    throw new Error(`Use either a release tag or --${options.bump}, not both.`)
+  }
+
+  if (options.yolo && tagArg === undefined && !options.bump) {
+    throw new Error(
+      'A release tag or --major, --minor, or --patch is required with --yolo.'
+    )
   }
 
   const repoRoot = await getRepoRoot()
@@ -54,7 +61,14 @@ export async function releaseController(
   const releases = await listReleases(100)
 
   let tag = tagArg?.trim() ?? ''
-  if (tagArg === undefined) {
+  if (options.bump) {
+    tag = bumpVersionTag(
+      releases.slice(0, 3).map((release) => release.tagName),
+      options.bump
+    )
+
+    console.log(chalk.dim(`Release tag: ${tag}`))
+  } else if (tagArg === undefined) {
     printRecentReleases(releases.slice(0, 5).reverse())
 
     tag = (
@@ -147,6 +161,33 @@ export async function releaseController(
   }
 
   await createRelease({ tag, target: headSha, notes })
+}
+
+function bumpVersionTag(
+  recentTags: string[],
+  bump: 'major' | 'minor' | 'patch'
+) {
+  const versionPattern = /^(v?)(\d+)\.(\d+)\.(\d+)$/
+  const invalidTags = recentTags.filter((tag) => !versionPattern.test(tag))
+  if (invalidTags.length > 0) {
+    throw new Error(
+      `Recent release tags must be MAJOR.MINOR.PATCH versions to use --${bump}: ${invalidTags.join(', ')}`
+    )
+  }
+
+  const match = versionPattern.exec(recentTags[0] ?? '')
+  if (!match) {
+    throw new Error(`No previous release found to apply --${bump} to.`)
+  }
+
+  const prefix = match[1]
+  const major = Number(match[2])
+  const minor = Number(match[3])
+  const patch = Number(match[4])
+  if (bump === 'major') return `${prefix}${major + 1}.0.0`
+  if (bump === 'minor') return `${prefix}${major}.${minor + 1}.0`
+  if (bump === 'patch') return `${prefix}${major}.${minor}.${patch + 1}`
+  throw new Error(`Unknown version bump '${bump}'.`)
 }
 
 function printRecentReleases(

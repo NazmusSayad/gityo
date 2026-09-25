@@ -231,8 +231,28 @@ app
     '-f, --force',
     'Recreate the release without asking if it already exists.'
   )
+  .option('--major', 'Bump the major version of the latest release.')
+  .option('--minor', 'Bump the minor version of the latest release.')
+  .option('--patch', 'Bump the patch version of the latest release.')
   .action((tag, options) => {
-    handleError(() => releaseController(tag, options))
+    const bumps = [options.major, options.minor, options.patch]
+    if (bumps.filter(Boolean).length > 1) {
+      console.error('Use only one of --major, --minor, or --patch.')
+      process.exit(1)
+    }
+
+    handleError(() =>
+      releaseController(tag, {
+        ...options,
+        bump: options.major
+          ? 'major'
+          : options.minor
+            ? 'minor'
+            : options.patch
+              ? 'patch'
+              : undefined,
+      })
+    )
   })
 
 const config = app
