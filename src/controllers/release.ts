@@ -67,7 +67,9 @@ export async function releaseController(
       options.bump
     )
 
-    console.log(chalk.dim(`Release tag: ${tag}`))
+    console.log(
+      `${chalk.blue.bold('Bumping')} ${chalk.cyan(releases[0]?.tagName)} to ${chalk.yellow.bold(tag)} ${chalk.dim(`using --${options.bump}`)}`
+    )
   } else if (tagArg === undefined) {
     printRecentReleases(releases.slice(0, 5).reverse())
 
@@ -144,7 +146,7 @@ export async function releaseController(
     if (
       options.yolo ||
       (await acceptGenerated(
-        `Create release ${chalk.cyan.bold(tag)} on ${chalk.yellow.bold(branch)}`,
+        `Create release ${chalk.yellow.bold(tag)} on ${chalk.yellow.bold(branch)}`,
         'generate new release notes'
       ))
     ) {
