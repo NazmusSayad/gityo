@@ -25,6 +25,10 @@ export const configSchema = z
     $schema: z.url(),
 
     models: z.record(z.string().min(1), modelSchema),
+    model: z.string().min(1),
+    prModel: z.string().min(1),
+    commitModel: z.string().min(1),
+    releaseModel: z.string().min(1),
 
     commitInstructions: instructionSchema,
     commitStyle: z.string().min(1),
@@ -50,6 +54,10 @@ export function resolveConfig(input: unknown) {
 
   return {
     models: parsed.models,
+    model: parsed.model,
+    prModel: parsed.prModel,
+    commitModel: parsed.commitModel,
+    releaseModel: parsed.releaseModel,
 
     commitStyle: parsed.commitStyle,
     commitStyles: parsed.commitStyles,

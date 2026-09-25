@@ -5,24 +5,23 @@ import { SUPPORTED_PROVIDERS } from './ai-sdk.js'
 
 export function resolveModelConfig(
   models: Record<string, z.infer<typeof modelSchema>> | undefined,
-  modelKey: string
+  modelKey: string | undefined
 ) {
-  const modelConfig = models?.[modelKey]
+  const modelKeys = Object.keys(models ?? {})
 
-  if (modelConfig) {
-    return modelConfig
-  }
-
-  const availableModels = Object.keys(models ?? {}).join(', ')
-
-  if (availableModels.length === 0) {
+  if (!models || modelKeys.length === 0) {
     throw new Error(
       'No models configured. Edit your config file to add a model — run `gityo config` to see where.'
     )
   }
 
+  const modelConfig = models[modelKey ?? modelKeys[0]]
+  if (modelConfig) {
+    return modelConfig
+  }
+
   throw new Error(
-    `Model '${modelKey}' is not configured. Available models: ${availableModels}.`
+    `Model '${modelKey}' is not configured. Available models: ${modelKeys.join(', ')}.`
   )
 }
 

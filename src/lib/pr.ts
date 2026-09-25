@@ -90,7 +90,7 @@ export async function loadPullRequestContext(
   const config = await loadConfig(repoRoot)
   const modelConfig = resolveModelConfig(
     config.models,
-    options.modelKey ?? 'default'
+    options.modelKey ?? config.prModel ?? config.model
   )
   const languageModel = resolveLanguageModel(modelConfig)
 

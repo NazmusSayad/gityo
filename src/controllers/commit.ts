@@ -55,7 +55,7 @@ export async function mainController(options: MainControllerOptions = {}) {
     (await git.revparse(['--show-toplevel'])).trim()
   )
 
-  const modelKey = options.model ?? 'default'
+  const modelKey = options.model ?? config.commitModel ?? config.model
   const modelConfig = resolveModelConfig(config.models, modelKey)
 
   const languageModel = resolveLanguageModel(modelConfig)

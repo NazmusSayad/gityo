@@ -26,7 +26,7 @@ const app = new Command()
   )
   .option(
     '--model <model>',
-    'Model key from config to use (defaults to "default").'
+    'Model key from config to use (overrides the configured model).'
   )
   .option(
     '-g, --generate',
@@ -81,7 +81,7 @@ app
   )
   .option(
     '--model <model>',
-    'Model key from config to use (defaults to "default").'
+    'Model key from config to use (overrides the configured model).'
   )
   .option(
     '-g, --generate',
@@ -136,7 +136,7 @@ pr.command('create')
   )
   .option(
     '--model <model>',
-    'Model key from config to use (defaults to "default").'
+    'Model key from config to use (overrides the configured model).'
   )
   .option(
     '-t, --title-style <style>',
@@ -173,7 +173,7 @@ pr.command('merge')
   )
   .option(
     '--model <model>',
-    'Model key from config to use (defaults to "default").'
+    'Model key from config to use (overrides the configured model).'
   )
   .option(
     '-t, --title-style <style>',
@@ -221,7 +221,7 @@ app
   .argument('[tag]', 'Release tag to create (asks when omitted).')
   .option(
     '--model <model>',
-    'Model key from config to use (defaults to "default").'
+    'Model key from config to use (overrides the configured model).'
   )
   .option(
     '-y, --yolo',

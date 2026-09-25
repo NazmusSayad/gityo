@@ -45,7 +45,10 @@ export async function releaseController(
   const repoRoot = await getRepoRoot()
   const config = await loadConfig(repoRoot)
   const languageModel = resolveLanguageModel(
-    resolveModelConfig(config.models, options.model ?? 'default')
+    resolveModelConfig(
+      config.models,
+      options.model ?? config.releaseModel ?? config.model
+    )
   )
 
   const releases = await listReleases(100)
