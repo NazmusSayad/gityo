@@ -26,7 +26,11 @@ import {
 } from '../lib/release/notes.js'
 import { runWithLoading } from '../lib/run-with-loading.js'
 
-const renderReleaseNotes = createRenderer({ width: 80, listIndent: 2 })
+const renderReleaseNotes = createRenderer(
+  process.stdout.columns
+    ? { width: Math.max(0, process.stdout.columns - 4), listIndent: 2 }
+    : { wrap: false, listIndent: 2 }
+)
 
 type ReleaseControllerOptions = {
   model?: string
