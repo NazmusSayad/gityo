@@ -152,6 +152,12 @@ export async function createPullRequest(
     )
   }
 
+  console.log(
+    chalk.dim(
+      `${compare.commits.length} commit(s) between ${options.base} and ${options.head}`
+    )
+  )
+
   const context = buildCompareContext(compare, maxDiffTokens)
   let draft = ''
 

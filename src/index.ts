@@ -194,6 +194,7 @@ pr.command('merge')
   .option('-m, --merge', 'Merge the commits with the base branch.')
   .option('-r, --rebase', 'Rebase the commits onto the base branch.')
   .option('-s, --squash', 'Squash the commits into one commit.')
+  .option('-w, --web', 'Open the pull request in a browser after merging.')
   .action((baseBranch, headBranch, options) => {
     const methods = [options.merge, options.rebase, options.squash]
     if (methods.filter(Boolean).length > 1) {

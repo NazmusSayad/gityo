@@ -1,8 +1,10 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
 import {
+  fetchCompare,
   findPullRequest,
   mergePullRequest,
+  openPullRequest,
   type MergeMethod,
 } from '../lib/gh.js'
 import { buildPullRequestSystemPrompt } from '../lib/llm/pr.js'
@@ -21,6 +23,7 @@ type PrMergeControllerOptions = {
   bodyStyle?: string
   yolo?: boolean
   all?: boolean
+  web?: boolean
 }
 
 export async function mergePullRequestController(
@@ -45,6 +48,13 @@ export async function mergePullRequestController(
   let pullRequest = await findPullRequest(branches.base, branches.head)
 
   if (pullRequest) {
+    const commitCount = (await fetchCompare(branches.base, branches.head))
+      .commits.length
+    console.log(
+      chalk.dim(
+        `${commitCount} commit(s) between ${branches.base} and ${branches.head}`
+      )
+    )
     console.log(pullRequest.url)
   } else {
     pullRequest = await createPullRequest({
@@ -78,4 +88,8 @@ export async function mergePullRequestController(
     pullRequest.number,
     options.mergeMethod ?? context.config.prMergeMethod
   )
+
+  if (options.web) {
+    await openPullRequest(pullRequest.number)
+  }
 }

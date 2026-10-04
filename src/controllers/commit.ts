@@ -89,6 +89,12 @@ export async function mainController(options: MainControllerOptions = {}) {
     return console.log('No changed files found.')
   }
 
+  console.log(
+    chalk.dim(
+      `${files.length} ${diffScope === 'staged' ? 'staged' : 'changed'} file(s)`
+    )
+  )
+
   const diff = await getCommitDiff(git, diffScope)
 
   if (finalCommitMessage.length > 0) {
