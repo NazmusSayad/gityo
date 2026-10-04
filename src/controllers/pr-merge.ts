@@ -1,7 +1,6 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
 import {
-  fetchCompare,
   findPullRequest,
   mergePullRequest,
   openPullRequest,
@@ -48,11 +47,9 @@ export async function mergePullRequestController(
   let pullRequest = await findPullRequest(branches.base, branches.head)
 
   if (pullRequest) {
-    const commitCount = (await fetchCompare(branches.base, branches.head))
-      .commits.length
     console.log(
       chalk.dim(
-        `${commitCount} commit(s) between ${branches.base} and ${branches.head}`
+        `${pullRequest.commitCount} commit(s) between ${branches.base} and ${branches.head}`
       )
     )
     console.log(pullRequest.url)

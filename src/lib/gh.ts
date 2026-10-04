@@ -5,6 +5,15 @@ export type PullRequest = {
   url: string
   baseRefName: string
   headRefName: string
+  commitCount: number
+}
+
+type PullRequestResult = {
+  number: number
+  url: string
+  baseRefName: string
+  headRefName: string
+  commits: { oid: string }[]
 }
 
 type CompareFile = {
@@ -42,7 +51,7 @@ export async function fetchCompare(base: string, head: string) {
 }
 
 export async function findPullRequest(base: string, head: string) {
-  const pullRequests = await ghJson<PullRequest[]>([
+  const pullRequests = await ghJson<PullRequestResult[]>([
     'pr',
     'list',
     '--state',
@@ -54,7 +63,7 @@ export async function findPullRequest(base: string, head: string) {
     '--limit',
     '100',
     '--json',
-    'number,url,baseRefName,headRefName',
+    'number,url,baseRefName,headRefName,commits',
   ])
 
   const matches = pullRequests.filter(
@@ -70,7 +79,15 @@ export async function findPullRequest(base: string, head: string) {
     throw new Error(`Multiple open pull requests found for ${base} <- ${head}.`)
   }
 
-  return matches[0]
+  const match = matches[0]
+
+  return {
+    number: match.number,
+    url: match.url,
+    baseRefName: match.baseRefName,
+    headRefName: match.headRefName,
+    commitCount: match.commits.length,
+  }
 }
 
 export async function createPullRequest(input: {

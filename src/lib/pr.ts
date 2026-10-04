@@ -200,7 +200,11 @@ export async function createPullRequest(
     head: options.head,
   })
 
-  const pullRequest = await resolveCreatedPullRequest(output, options)
+  const pullRequest = await resolveCreatedPullRequest(
+    output,
+    options,
+    compare.commits.length
+  )
   console.log(pullRequest.url)
 
   return pullRequest
@@ -222,7 +226,8 @@ function parsePullRequestContent(text: string): PullRequestContent {
 
 async function resolveCreatedPullRequest(
   output: string,
-  options: CreatePullRequestOptions
+  options: CreatePullRequestOptions,
+  commitCount: number
 ): Promise<PullRequest> {
   const match = output.match(PR_URL_PATTERN)
 
@@ -232,6 +237,7 @@ async function resolveCreatedPullRequest(
       url: match[0],
       baseRefName: options.base,
       headRefName: options.head,
+      commitCount,
     }
   }
 
