@@ -13,8 +13,34 @@ type PullRequestResult = {
   url: string
   baseRefName: string
   headRefName: string
-  commits: { oid: string }[]
+  commits: { totalCount: number }
 }
+
+type PullRequestQueryResult = {
+  data: {
+    repository: {
+      pullRequests: {
+        nodes: PullRequestResult[]
+      }
+    }
+  }
+}
+
+const PULL_REQUEST_QUERY = `
+  query($owner: String!, $name: String!, $base: String!, $head: String!) {
+    repository(owner: $owner, name: $name) {
+      pullRequests(first: 100, states: OPEN, baseRefName: $base, headRefName: $head) {
+        nodes {
+          number
+          url
+          baseRefName
+          headRefName
+          commits { totalCount }
+        }
+      }
+    }
+  }
+`
 
 type CompareFile = {
   filename: string
@@ -51,22 +77,21 @@ export async function fetchCompare(base: string, head: string) {
 }
 
 export async function findPullRequest(base: string, head: string) {
-  const pullRequests = await ghJson<PullRequestResult[]>([
-    'pr',
-    'list',
-    '--state',
-    'open',
-    '--base',
-    base,
-    '--head',
-    head,
-    '--limit',
-    '100',
-    '--json',
-    'number,url,baseRefName,headRefName,commits',
+  const result = await ghJson<PullRequestQueryResult>([
+    'api',
+    'graphql',
+    '-f',
+    `query=${PULL_REQUEST_QUERY}`,
+    '-F',
+    'owner={owner}',
+    '-F',
+    'name={repo}',
+    '-F',
+    `base=${base}`,
+    '-F',
+    `head=${head}`,
   ])
-
-  const matches = pullRequests.filter(
+  const matches = result.data.repository.pullRequests.nodes.filter(
     (pullRequest) =>
       pullRequest.baseRefName === base && pullRequest.headRefName === head
   )
@@ -86,7 +111,7 @@ export async function findPullRequest(base: string, head: string) {
     url: match.url,
     baseRefName: match.baseRefName,
     headRefName: match.headRefName,
-    commitCount: match.commits.length,
+    commitCount: match.commits.totalCount,
   }
 }
 
