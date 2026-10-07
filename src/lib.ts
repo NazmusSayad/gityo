@@ -48,6 +48,7 @@ export type CommitSession = {
   root: string
   scope: 'staged' | 'all'
   files: string[]
+  postCommand: 'push' | 'push-and-pull' | null
   generateMessage: () => Promise<string>
   commit: (message: string) => Promise<void>
 }
@@ -70,6 +71,7 @@ export async function createCommitSession(options: {
     root: prepared.root,
     scope: prepared.diffScope,
     files: prepared.files,
+    postCommand: prepared.config.postCommand,
 
     async generateMessage() {
       if (prepared.files.length === 0) {
