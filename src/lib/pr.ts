@@ -156,11 +156,7 @@ export async function createPullRequest(
     options.head
   )
 
-  console.log(
-    chalk.dim(
-      `${compare.commits.length} commit(s) between ${options.base} and ${options.head}`
-    )
-  )
+  console.log(formatCompareSummary(compare))
 
   const context = buildCompareContext(compare, maxDiffTokens)
   let draft = ''
@@ -203,6 +199,20 @@ export async function createPullRequest(
   console.log(pullRequest.url)
 
   return pullRequest
+}
+
+export function formatCompareSummary(compare: CompareResult) {
+  const files = compare.files ?? []
+  const additions = files.reduce((total, file) => total + file.additions, 0)
+  const deletions = files.reduce((total, file) => total + file.deletions, 0)
+
+  return [
+    chalk.dim(
+      `${compare.commits.length} ${compare.commits.length === 1 ? 'commit' : 'commits'}, ${files.length} ${files.length === 1 ? 'file' : 'files'},`
+    ),
+    chalk.green.dim(`+${additions}`),
+    chalk.red.dim(`-${deletions}`),
+  ].join(' ')
 }
 
 export async function fetchPullRequestCompare(

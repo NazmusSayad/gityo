@@ -1,6 +1,7 @@
 import { confirm } from '@inquirer/prompts'
 import chalk from 'chalk'
 import {
+  fetchCompare,
   findPullRequest,
   mergePullRequest,
   openPullRequest,
@@ -9,6 +10,7 @@ import {
 import { buildPullRequestSystemPrompt } from '../lib/llm/pr.js'
 import {
   createPullRequest,
+  formatCompareSummary,
   loadPullRequestContext,
   resolvePrBranches,
 } from '../lib/pr.js'
@@ -49,8 +51,8 @@ export async function mergePullRequestController(
 
   if (pullRequest) {
     console.log(
-      chalk.dim(
-        `${pullRequest.commitCount} commit(s) between ${branches.base} and ${branches.head}`
+      formatCompareSummary(
+        await fetchCompare(cwd, branches.base, branches.head)
       )
     )
     console.log(pullRequest.url)

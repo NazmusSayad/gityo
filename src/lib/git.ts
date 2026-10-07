@@ -84,6 +84,21 @@ export async function getCommitDiff(
     .join('\n')
 }
 
+export function countDiffLines(diff: string) {
+  let additions = 0
+  let deletions = 0
+  let inHunk = false
+
+  for (const line of diff.split('\n')) {
+    if (line.startsWith('diff ')) inHunk = false
+    else if (line.startsWith('@@')) inHunk = true
+    else if (inHunk && line.startsWith('+')) additions++
+    else if (inHunk && line.startsWith('-')) deletions++
+  }
+
+  return { additions, deletions }
+}
+
 function splitNull(output: string) {
   return output.split('\0').filter(Boolean)
 }
