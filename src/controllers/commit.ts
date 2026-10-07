@@ -77,7 +77,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   console.log(
     [
       chalk.dim(
-        `${files.length} ${diffScope === 'staged' ? 'staged' : 'changed'} file(s)`
+        `${files.length} ${diffScope === 'staged' ? 'staged ' : ''}file(s)`
       ),
       chalk.green.dim(`+${lineCounts.additions}`),
       chalk.red.dim(`-${lineCounts.deletions}`),
