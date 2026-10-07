@@ -13,9 +13,16 @@ class CommandError extends Error {
   }
 }
 
-export function exec(command: string, args: string[]): Promise<string> {
+export function exec(
+  command: string,
+  args: string[],
+  cwd: string
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn(command, args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
     let stdout = ''
     let stderr = ''
 
@@ -43,9 +50,13 @@ export function exec(command: string, args: string[]): Promise<string> {
   })
 }
 
-export function execInherit(command: string, args: string[]): Promise<void> {
+export function execInherit(
+  command: string,
+  args: string[],
+  cwd: string
+): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit' })
+    const child = spawn(command, args, { cwd, stdio: 'inherit' })
 
     child.on('error', (error: NodeJS.ErrnoException) => {
       reject(toSpawnError(command, error))
@@ -59,6 +70,20 @@ export function execInherit(command: string, args: string[]): Promise<void> {
       reject(new CommandError(command, args, code, ''))
     })
   })
+}
+
+export async function execWithOutput(
+  command: string,
+  args: string[],
+  cwd: string,
+  output: 'inherit' | 'capture'
+) {
+  if (output === 'inherit') return execInherit(command, args, cwd)
+  if (output === 'capture') {
+    await exec(command, args, cwd)
+    return
+  }
+  throw new Error(`Unknown output mode '${output as string}'.`)
 }
 
 function toSpawnError(command: string, error: NodeJS.ErrnoException) {

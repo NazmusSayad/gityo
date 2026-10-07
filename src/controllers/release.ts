@@ -54,9 +54,10 @@ export async function releaseController(
     )
   }
 
-  const repoRoot = await getRepoRoot()
+  const cwd = process.cwd()
+  const repoRoot = await getRepoRoot(cwd)
   const config = await loadConfig(repoRoot)
-  const releases = await listReleases(100)
+  const releases = await listReleases(cwd, 100)
 
   let tag = tagArg?.trim() ?? ''
   if (options.bump) {
@@ -85,7 +86,7 @@ export async function releaseController(
     throw new Error('Release tag cannot be empty.')
   }
 
-  const exists = await releaseExists(tag)
+  const exists = await releaseExists(cwd, tag)
   if (exists && !options.force) {
     const recreate = await confirm({
       message: chalk.yellow(`Release ${tag} already exists. Recreate it?`),
@@ -99,13 +100,13 @@ export async function releaseController(
     }
   }
 
-  const branch = await getDefaultBranch()
+  const branch = await getDefaultBranch(cwd)
   if (branch.length === 0) {
     throw new Error('Could not determine the default branch.')
   }
 
   if (options.empty) {
-    const headSha = await getBranchHeadSha(branch)
+    const headSha = await getBranchHeadSha(cwd, branch)
 
     if (
       !options.yolo &&
@@ -120,10 +121,10 @@ export async function releaseController(
     }
 
     if (exists) {
-      await deleteRelease(tag)
+      await deleteRelease(cwd, tag, 'inherit')
     }
 
-    await createRelease({ tag, target: headSha, notes: '' })
+    await createRelease(cwd, { tag, target: headSha, notes: '' }, 'inherit')
     return
   }
 
@@ -138,13 +139,16 @@ export async function releaseController(
   const previousTag =
     (tagIndex === -1 ? releases[0] : releases[tagIndex + 1])?.tagName ?? null
 
-  const headSha = await getBranchHeadSha(branch)
+  const headSha = await getBranchHeadSha(cwd, branch)
   const commits = await runWithLoading('Loading commits from GitHub', () =>
-    listReleaseCommits(previousTag, headSha)
+    listReleaseCommits(cwd, previousTag, headSha)
   )
 
-  await runWithLoading('Fetching commits', () => fetchBranchAndTags(branch))
+  await runWithLoading('Fetching commits', () =>
+    fetchBranchAndTags(cwd, branch)
+  )
   await assertLocalCommitsMatch(
+    cwd,
     previousTag,
     headSha,
     commits.map((commit) => commit.hash)
@@ -162,7 +166,7 @@ export async function releaseController(
       commits.length === 0
         ? EMPTY_RELEASE_NOTES
         : await runWithLoading('Generating release notes', () =>
-            generateReleaseNotes(languageModel, commits, {
+            generateReleaseNotes(cwd, languageModel, commits, {
               maxTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
               perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
             })
@@ -187,13 +191,13 @@ export async function releaseController(
   }
 
   if (exists) {
-    await deleteRelease(tag)
+    await deleteRelease(cwd, tag, 'inherit')
   }
 
-  await createRelease({ tag, target: headSha, notes })
+  await createRelease(cwd, { tag, target: headSha, notes }, 'inherit')
 }
 
-function bumpVersionTag(
+export function bumpVersionTag(
   recentTags: string[],
   bump: 'major' | 'minor' | 'patch'
 ) {

@@ -31,26 +31,30 @@ const renderPullRequest = createRenderer({
   listIndent: 2,
 })
 
-export async function getCurrentBranch() {
-  const output = await exec('git', ['branch', '--show-current'])
+export async function getCurrentBranch(cwd: string) {
+  const output = await exec('git', ['branch', '--show-current'], cwd)
 
   return output.trim()
 }
 
-async function getRepoRoot() {
-  const output = await exec('git', ['rev-parse', '--show-toplevel'])
+async function getRepoRoot(cwd: string) {
+  const output = await exec('git', ['rev-parse', '--show-toplevel'], cwd)
 
   return output.trim()
 }
 
-export async function resolvePrBranches(baseArg?: string, headArg?: string) {
-  const head = headArg?.trim() || (await getCurrentBranch())
+export async function resolvePrBranches(
+  cwd: string,
+  baseArg?: string,
+  headArg?: string
+) {
+  const head = headArg?.trim() || (await getCurrentBranch(cwd))
 
   if (head.length === 0) {
     throw new Error('Could not determine the current branch.')
   }
 
-  const base = baseArg?.trim() || (await getDefaultBranch())
+  const base = baseArg?.trim() || (await getDefaultBranch(cwd))
 
   if (base.length === 0) {
     throw new Error('Could not determine the base branch.')
@@ -64,6 +68,7 @@ export async function resolvePrBranches(baseArg?: string, headArg?: string) {
 }
 
 type CreatePullRequestOptions = {
+  cwd: string
   base: string
   head: string
   languageModel: LanguageModel
@@ -84,9 +89,10 @@ type PullRequestContextOptions = {
 }
 
 export async function loadPullRequestContext(
+  cwd: string,
   options: PullRequestContextOptions = {}
 ) {
-  const repoRoot = await getRepoRoot()
+  const repoRoot = await getRepoRoot(cwd)
   const config = await loadConfig(repoRoot)
   const modelConfig = resolveModelConfig(
     config.models,
@@ -144,7 +150,7 @@ export async function createPullRequest(
   options: CreatePullRequestOptions
 ): Promise<PullRequest> {
   const maxDiffTokens = options.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS
-  const compare = await fetchCompare(options.base, options.head)
+  const compare = await fetchCompare(options.cwd, options.base, options.head)
 
   if (compare.commits.length === 0) {
     throw new Error(
@@ -193,7 +199,7 @@ export async function createPullRequest(
     console.log(chalk.green('✓ Creating pull request'))
   }
 
-  const output = await createPullRequestApi({
+  const output = await createPullRequestApi(options.cwd, {
     title: content.title,
     body: content.body,
     base: options.base,
@@ -210,7 +216,7 @@ export async function createPullRequest(
   return pullRequest
 }
 
-function parsePullRequestContent(text: string): PullRequestContent {
+export function parsePullRequestContent(text: string): PullRequestContent {
   const lines = text.trim().split('\n')
 
   return {
@@ -224,9 +230,9 @@ function parsePullRequestContent(text: string): PullRequestContent {
   }
 }
 
-async function resolveCreatedPullRequest(
+export async function resolveCreatedPullRequest(
   output: string,
-  options: CreatePullRequestOptions,
+  options: { cwd: string; base: string; head: string },
   commitCount: number
 ): Promise<PullRequest> {
   const match = output.match(PR_URL_PATTERN)
@@ -241,7 +247,7 @@ async function resolveCreatedPullRequest(
     }
   }
 
-  const found = await findPullRequest(options.base, options.head)
+  const found = await findPullRequest(options.cwd, options.base, options.head)
 
   if (found) {
     return found
@@ -250,7 +256,10 @@ async function resolveCreatedPullRequest(
   throw new Error('Pull request was created but could not be located.')
 }
 
-function buildCompareContext(compare: CompareResult, maxDiffTokens: number) {
+export function buildCompareContext(
+  compare: CompareResult,
+  maxDiffTokens: number
+) {
   const files = compare.files ?? []
   const lines = [
     'Commits between base and head:',
