@@ -10,6 +10,7 @@ import {
   splitDiffIntoChunks,
 } from '../lib/diff.js'
 import {
+  countDiffLines,
   getChangedFiles,
   getCommitDiff,
   getGit,
@@ -70,13 +71,18 @@ export async function mainController(options: MainControllerOptions = {}) {
     return console.log('No changed files found.')
   }
 
-  console.log(
-    chalk.dim(
-      `${files.length} ${diffScope === 'staged' ? 'staged' : 'changed'} file(s)`
-    )
-  )
-
   const diff = await getCommitDiff(git, diffScope)
+  const lineCounts = countDiffLines(diff)
+
+  console.log(
+    [
+      chalk.dim(
+        `${files.length} ${diffScope === 'staged' ? 'staged' : 'changed'} file(s)`
+      ),
+      chalk.green.dim(`+${lineCounts.additions}`),
+      chalk.red.dim(`-${lineCounts.deletions}`),
+    ].join(' ')
+  )
 
   if (finalCommitMessage.length > 0) {
     console.log(chalk.yellow('✓ Using direct commit message'))
