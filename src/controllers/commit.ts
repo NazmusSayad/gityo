@@ -86,26 +86,10 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   if (finalCommitMessage.length === 0) {
     while (true) {
-      const commitMessage = await runWithLoading(
+      finalCommitMessage = await runWithLoading(
         'Generating commit message',
-        () =>
-          generateMessage({
-            git,
-            scope: diffScope,
-            languageModel: prepared.languageModel,
-            style: prepared.style,
-            instructions: prepared.instructions,
-            diff,
-            files,
-            perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
-            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
-          })
+        () => writeCommitMessage(prepared, diff)
       )
-
-      finalCommitMessage = commitMessage.trim()
-      if (finalCommitMessage.length === 0) {
-        throw new Error('The selected model returned an empty commit message.')
-      }
 
       console.log(chalk.cyan.dim(finalCommitMessage))
       console.log('')
@@ -183,7 +167,7 @@ export async function prepareCommit(options: {
   const languageModel = resolveLanguageModel(modelConfig)
 
   const styleKey = options.style ?? config.commitStyle ?? 'default'
-  const style = await resolveStyle(styleKey, config.commitStyles)
+  const style = await resolveStyle(styleKey, config.commitStyles, options.cwd)
   if (!style) {
     const availableStyles = getStyleKeys(config.commitStyles).join(', ')
     throw new Error(
@@ -192,7 +176,7 @@ export async function prepareCommit(options: {
   }
 
   const instructions = config.commitInstructions
-    ? await resolveInstructionContent(config.commitInstructions)
+    ? await resolveInstructionContent(config.commitInstructions, options.cwd)
     : null
 
   const { diffScope, files } = await getCommitFiles(git, options.scope)
@@ -208,6 +192,29 @@ export async function prepareCommit(options: {
     diffScope,
     files,
   }
+}
+
+export async function writeCommitMessage(
+  prepared: Awaited<ReturnType<typeof prepareCommit>>,
+  diff: string
+) {
+  const message = await generateMessage({
+    git: prepared.git,
+    scope: prepared.diffScope,
+    languageModel: prepared.languageModel,
+    style: prepared.style,
+    instructions: prepared.instructions,
+    diff,
+    files: prepared.files,
+    perFileCap: prepared.config.perFileCap ?? DEFAULT_PER_FILE_CAP,
+    maxDiffTokens: prepared.config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
+  })
+
+  if (message.trim().length === 0) {
+    throw new Error('The selected model returned an empty commit message.')
+  }
+
+  return message.trim()
 }
 
 export async function getCommitFiles(git: SimpleGit, commitScope: CommitScope) {
@@ -245,7 +252,7 @@ type GenerateMessageOptions = {
   perFileCap: number
 }
 
-export async function generateMessage(options: GenerateMessageOptions) {
+async function generateMessage(options: GenerateMessageOptions) {
   const { git, languageModel, style, instructions, diff } = options
 
   if (estimateTokens(diff) <= options.maxDiffTokens) {

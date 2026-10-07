@@ -1,16 +1,12 @@
-import { generateMessage, prepareCommit } from './controllers/commit.js'
-import { bumpVersionTag } from './controllers/release.js'
-import { DEFAULT_MAX_DIFF_TOKENS, DEFAULT_PER_FILE_CAP } from './lib/diff.js'
+import { prepareCommit, writeCommitMessage } from './controllers/commit.js'
+import { DEFAULT_MAX_DIFF_TOKENS } from './lib/diff.js'
 import {
-  createPullRequest as createPullRequestApi,
-  fetchCompare,
   findPullRequest,
   getDefaultBranch,
   mergePullRequest,
   type CompareResult,
 } from './lib/gh.js'
 import { getCommitDiff } from './lib/git.js'
-import { resolveLanguageModel, resolveModelConfig } from './lib/llm/model.js'
 import {
   buildPullRequestSystemPrompt,
   generatePullRequest,
@@ -18,29 +14,28 @@ import {
 import { loadConfig } from './lib/load-config.js'
 import {
   buildCompareContext,
+  fetchPullRequestCompare,
   loadPullRequestContext,
   parsePullRequestContent,
-  resolveCreatedPullRequest,
   resolvePrBranches,
+  submitPullRequest,
 } from './lib/pr.js'
 import {
-  createRelease,
-  deleteRelease,
+  bumpVersionTag,
+  getPreviousTag,
+  publishRelease,
+  resolveReleaseModel,
+  verifyReleaseCommits,
+  writeReleaseNotes,
+} from './lib/release/flow.js'
+import {
   getBranchHeadSha,
   listReleaseCommits,
   listReleases,
   releaseExists,
   type ReleaseCommit,
 } from './lib/release/gh.js'
-import {
-  assertLocalCommitsMatch,
-  fetchBranchAndTags,
-  getRepoRoot,
-} from './lib/release/git.js'
-import {
-  EMPTY_RELEASE_NOTES,
-  generateReleaseNotes,
-} from './lib/release/notes.js'
+import { getRepoRoot } from './lib/release/git.js'
 
 export type CommitScope = 'everything' | 'staged-only' | 'staged-or-changes'
 
@@ -80,23 +75,7 @@ export async function createCommitSession(options: {
 
       diff ??= await getCommitDiff(prepared.git, prepared.diffScope)
 
-      const message = await generateMessage({
-        git: prepared.git,
-        scope: prepared.diffScope,
-        languageModel: prepared.languageModel,
-        style: prepared.style,
-        instructions: prepared.instructions,
-        diff,
-        files: prepared.files,
-        perFileCap: prepared.config.perFileCap ?? DEFAULT_PER_FILE_CAP,
-        maxDiffTokens: prepared.config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
-      })
-
-      if (message.trim().length === 0) {
-        throw new Error('The selected model returned an empty commit message.')
-      }
-
-      return message.trim()
+      return writeCommitMessage(prepared, diff)
     },
 
     async commit(message: string) {
@@ -130,7 +109,7 @@ export type PullRequestSession = {
   mergeMethod: MergeMethod
   generate: () => Promise<{ title: string; body: string }>
   create: (content: { title: string; body: string }) => Promise<PullRequestInfo>
-  merge: (number: number, method: MergeMethod) => Promise<void>
+  merge: () => Promise<void>
 }
 
 export async function createPullRequestSession(options: {
@@ -157,61 +136,64 @@ export async function createPullRequestSession(options: {
     branches.base,
     branches.head
   )
+  let pullRequest = existing === null ? null : toPullRequestInfo(existing)
   let compare: CompareResult | null = null
-
-  async function loadCompare() {
-    compare ??= await fetchCompare(options.cwd, branches.base, branches.head)
-    if (compare.commits.length === 0) {
-      throw new Error(
-        `No commits found between '${branches.base}' and '${branches.head}'.`
-      )
-    }
-    return compare
-  }
 
   return {
     base: branches.base,
     head: branches.head,
-    existing: existing === null ? null : toPullRequestInfo(existing),
+    existing: pullRequest,
     mergeMethod: context.config.prMergeMethod,
 
     async generate() {
+      compare ??= await fetchPullRequestCompare(
+        options.cwd,
+        branches.base,
+        branches.head
+      )
       const draft = await generatePullRequest({
         languageModel: context.languageModel,
         systemPrompt,
         context: buildCompareContext(
-          await loadCompare(),
+          compare,
           context.config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS
         ),
       })
-      const content = parsePullRequestContent(draft)
-      if (content.title.length === 0) {
-        throw new Error(
-          'The selected model returned an empty pull request title.'
-        )
-      }
-      return content
+      return parsePullRequestContent(draft)
     },
 
     async create(content) {
-      const commitCount = (await loadCompare()).commits.length
-      const output = await createPullRequestApi(options.cwd, {
-        title: content.title,
-        body: content.body,
-        base: branches.base,
-        head: branches.head,
-      })
-      return toPullRequestInfo(
-        await resolveCreatedPullRequest(
-          output,
-          { cwd: options.cwd, base: branches.base, head: branches.head },
-          commitCount
+      if (pullRequest !== null) {
+        throw new Error(`Pull request #${pullRequest.number} is already open.`)
+      }
+
+      compare ??= await fetchPullRequestCompare(
+        options.cwd,
+        branches.base,
+        branches.head
+      )
+      pullRequest = toPullRequestInfo(
+        await submitPullRequest(
+          options.cwd,
+          content,
+          branches,
+          compare.commits.length
         )
       )
+      return pullRequest
     },
 
-    async merge(number, method) {
-      await mergePullRequest(options.cwd, number, method, 'capture')
+    async merge() {
+      if (pullRequest === null) {
+        throw new Error('There is no pull request to merge.')
+      }
+
+      await mergePullRequest(
+        options.cwd,
+        pullRequest.number,
+        context.config.prMergeMethod,
+        'capture'
+      )
     },
   }
 }
@@ -237,7 +219,7 @@ export type ReleaseDraft = {
   exists: boolean
   previousTag: string | null
   generateNotes: () => Promise<string>
-  create: (notes: string) => Promise<void>
+  create: (notes: string, options: { replace: boolean }) => Promise<void>
 }
 
 export type ReleaseSession = {
@@ -277,13 +259,13 @@ export async function createReleaseSession(options: {
       if (tag.length === 0) {
         throw new Error('Release tag cannot be empty.')
       }
+      if (tag.startsWith('-')) {
+        throw new Error(`Release tag '${tag}' cannot start with '-'.`)
+      }
 
       const exists = await releaseExists(options.cwd, tag)
       const headSha = await getBranchHeadSha(options.cwd, branch)
-      const tagIndex = releases.findIndex((release) => release.tagName === tag)
-      const previousTag =
-        (tagIndex === -1 ? releases[0] : releases[tagIndex + 1])?.tagName ??
-        null
+      const previousTag = getPreviousTag(releases, tag)
       let commits: ReleaseCommit[] | null = null
 
       return {
@@ -293,36 +275,26 @@ export async function createReleaseSession(options: {
 
         async generateNotes() {
           if (commits === null) {
-            commits = await listReleaseCommits(
+            const loaded = await listReleaseCommits(
               options.cwd,
               previousTag,
               headSha
             )
-            await fetchBranchAndTags(options.cwd, branch)
-            await assertLocalCommitsMatch(
+            await verifyReleaseCommits(
               options.cwd,
+              branch,
               previousTag,
               headSha,
-              commits.map((commit) => commit.hash)
+              loaded
             )
+            commits = loaded
           }
 
-          if (commits.length === 0) return EMPTY_RELEASE_NOTES
-
-          const languageModel = resolveLanguageModel(
-            resolveModelConfig(
-              config.models,
-              options.model ?? config.releaseModel ?? config.model
-            )
-          )
-          const notes = await generateReleaseNotes(
+          const notes = await writeReleaseNotes(
             options.cwd,
-            languageModel,
-            commits,
-            {
-              maxTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
-              perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
-            }
+            resolveReleaseModel(config, options.model),
+            config,
+            commits
           )
           if (notes.length === 0) {
             throw new Error('The selected model returned empty release notes.')
@@ -330,13 +302,18 @@ export async function createReleaseSession(options: {
           return notes
         },
 
-        async create(notes) {
-          if (exists) {
-            await deleteRelease(options.cwd, tag, 'capture')
+        async create(notes, createOptions) {
+          if (exists && !createOptions.replace) {
+            throw new Error(`Release ${tag} already exists.`)
           }
-          await createRelease(
+          if (!exists && createOptions.replace) {
+            throw new Error(`Release ${tag} does not exist to replace.`)
+          }
+
+          await publishRelease(
             options.cwd,
             { tag, target: headSha, notes },
+            exists,
             'capture'
           )
         },

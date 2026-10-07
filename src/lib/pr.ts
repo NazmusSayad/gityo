@@ -117,7 +117,7 @@ export async function loadPullRequestContext(
   const titleInstructions =
     typeof titleStyle === 'string'
       ? titleStyle
-      : await readFile(path.resolve(titleStyle.path), 'utf8')
+      : await readFile(path.resolve(cwd, titleStyle.path), 'utf8')
 
   const bodyStyleKey = options.bodyStyle ?? config.prBodyStyle ?? 'default'
   const bodyStyle =
@@ -136,7 +136,7 @@ export async function loadPullRequestContext(
   const bodyInstructions =
     typeof bodyStyle === 'string'
       ? bodyStyle
-      : await readFile(path.resolve(bodyStyle.path), 'utf8')
+      : await readFile(path.resolve(cwd, bodyStyle.path), 'utf8')
 
   return {
     config,
@@ -150,13 +150,11 @@ export async function createPullRequest(
   options: CreatePullRequestOptions
 ): Promise<PullRequest> {
   const maxDiffTokens = options.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS
-  const compare = await fetchCompare(options.cwd, options.base, options.head)
-
-  if (compare.commits.length === 0) {
-    throw new Error(
-      `No commits found between '${options.base}' and '${options.head}'.`
-    )
-  }
+  const compare = await fetchPullRequestCompare(
+    options.cwd,
+    options.base,
+    options.head
+  )
 
   console.log(
     chalk.dim(
@@ -191,24 +189,15 @@ export async function createPullRequest(
   }
 
   const content = parsePullRequestContent(draft)
-  if (content.title.length === 0) {
-    throw new Error('The selected model returned an empty pull request title.')
-  }
 
   if (options.autoAccept) {
     console.log(chalk.green('✓ Creating pull request'))
   }
 
-  const output = await createPullRequestApi(options.cwd, {
-    title: content.title,
-    body: content.body,
-    base: options.base,
-    head: options.head,
-  })
-
-  const pullRequest = await resolveCreatedPullRequest(
-    output,
-    options,
+  const pullRequest = await submitPullRequest(
+    options.cwd,
+    content,
+    { base: options.base, head: options.head },
     compare.commits.length
   )
   console.log(pullRequest.url)
@@ -216,10 +205,23 @@ export async function createPullRequest(
   return pullRequest
 }
 
+export async function fetchPullRequestCompare(
+  cwd: string,
+  base: string,
+  head: string
+) {
+  const compare = await fetchCompare(cwd, base, head)
+
+  if (compare.commits.length === 0) {
+    throw new Error(`No commits found between '${base}' and '${head}'.`)
+  }
+
+  return compare
+}
+
 export function parsePullRequestContent(text: string): PullRequestContent {
   const lines = text.trim().split('\n')
-
-  return {
+  const content = {
     title: lines[0]
       .trim()
       .replace(/^#{1,6}\s*/, '')
@@ -228,9 +230,35 @@ export function parsePullRequestContent(text: string): PullRequestContent {
       .trim(),
     body: lines.slice(1).join('\n').trim(),
   }
+
+  if (content.title.length === 0) {
+    throw new Error('The selected model returned an empty pull request title.')
+  }
+
+  return content
 }
 
-export async function resolveCreatedPullRequest(
+export async function submitPullRequest(
+  cwd: string,
+  content: PullRequestContent,
+  branches: { base: string; head: string },
+  commitCount: number
+) {
+  const output = await createPullRequestApi(cwd, {
+    title: content.title,
+    body: content.body,
+    base: branches.base,
+    head: branches.head,
+  })
+
+  return resolveCreatedPullRequest(
+    output,
+    { cwd, base: branches.base, head: branches.head },
+    commitCount
+  )
+}
+
+async function resolveCreatedPullRequest(
   output: string,
   options: { cwd: string; base: string; head: string },
   commitCount: number

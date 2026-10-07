@@ -19,7 +19,8 @@ export function getStyleKeys(
 
 export async function resolveStyle(
   styleKey: string,
-  styles: Record<string, z.infer<typeof instructionSchema>> | undefined
+  styles: Record<string, z.infer<typeof instructionSchema>> | undefined,
+  baseDir: string
 ) {
   const style = styles?.[styleKey] ?? BUILTIN_STYLES[styleKey]
 
@@ -27,15 +28,16 @@ export async function resolveStyle(
     return undefined
   }
 
-  return resolveInstructionContent(style)
+  return resolveInstructionContent(style, baseDir)
 }
 
 export async function resolveInstructionContent(
-  instruction: z.infer<typeof instructionSchema>
+  instruction: z.infer<typeof instructionSchema>,
+  baseDir: string
 ) {
   if (typeof instruction === 'string') {
     return instruction
   }
 
-  return readFile(path.resolve(instruction.path), 'utf8')
+  return readFile(path.resolve(baseDir, instruction.path), 'utf8')
 }

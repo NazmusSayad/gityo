@@ -23,7 +23,8 @@
     ".": {
       "types": "./dist/lib.d.ts",
       "import": "./dist/lib.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "devDependencies": {
     "@ai-sdk/amazon-bedrock": "^5.0.87",

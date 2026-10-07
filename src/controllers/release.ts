@@ -2,28 +2,24 @@ import { confirm, input } from '@inquirer/prompts'
 import chalk from 'chalk'
 import { createRenderer } from 'markdansi'
 import prettyMs from 'pretty-ms'
-import { DEFAULT_MAX_DIFF_TOKENS, DEFAULT_PER_FILE_CAP } from '../lib/diff.js'
 import { getDefaultBranch } from '../lib/gh.js'
-import { resolveLanguageModel, resolveModelConfig } from '../lib/llm/model.js'
 import { loadConfig } from '../lib/load-config.js'
 import { acceptGenerated, selectionTheme } from '../lib/prompts.js'
 import {
-  createRelease,
-  deleteRelease,
+  bumpVersionTag,
+  getPreviousTag,
+  publishRelease,
+  resolveReleaseModel,
+  verifyReleaseCommits,
+  writeReleaseNotes,
+} from '../lib/release/flow.js'
+import {
   getBranchHeadSha,
   listReleaseCommits,
   listReleases,
   releaseExists,
 } from '../lib/release/gh.js'
-import {
-  assertLocalCommitsMatch,
-  fetchBranchAndTags,
-  getRepoRoot,
-} from '../lib/release/git.js'
-import {
-  EMPTY_RELEASE_NOTES,
-  generateReleaseNotes,
-} from '../lib/release/notes.js'
+import { getRepoRoot } from '../lib/release/git.js'
 import { runWithLoading } from '../lib/run-with-loading.js'
 
 const renderReleaseNotes = createRenderer(
@@ -120,24 +116,17 @@ export async function releaseController(
       return
     }
 
-    if (exists) {
-      await deleteRelease(cwd, tag, 'inherit')
-    }
-
-    await createRelease(cwd, { tag, target: headSha, notes: '' }, 'inherit')
+    await publishRelease(
+      cwd,
+      { tag, target: headSha, notes: '' },
+      exists,
+      'inherit'
+    )
     return
   }
 
-  const languageModel = resolveLanguageModel(
-    resolveModelConfig(
-      config.models,
-      options.model ?? config.releaseModel ?? config.model
-    )
-  )
-
-  const tagIndex = releases.findIndex((release) => release.tagName === tag)
-  const previousTag =
-    (tagIndex === -1 ? releases[0] : releases[tagIndex + 1])?.tagName ?? null
+  const languageModel = resolveReleaseModel(config, options.model)
+  const previousTag = getPreviousTag(releases, tag)
 
   const headSha = await getBranchHeadSha(cwd, branch)
   const commits = await runWithLoading('Loading commits from GitHub', () =>
@@ -145,13 +134,7 @@ export async function releaseController(
   )
 
   await runWithLoading('Fetching commits', () =>
-    fetchBranchAndTags(cwd, branch)
-  )
-  await assertLocalCommitsMatch(
-    cwd,
-    previousTag,
-    headSha,
-    commits.map((commit) => commit.hash)
+    verifyReleaseCommits(cwd, branch, previousTag, headSha, commits)
   )
 
   console.log(
@@ -162,15 +145,9 @@ export async function releaseController(
 
   let notes = ''
   while (true) {
-    notes =
-      commits.length === 0
-        ? EMPTY_RELEASE_NOTES
-        : await runWithLoading('Generating release notes', () =>
-            generateReleaseNotes(cwd, languageModel, commits, {
-              maxTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
-              perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
-            })
-          )
+    notes = await runWithLoading('Generating release notes', () =>
+      writeReleaseNotes(cwd, languageModel, config, commits)
+    )
 
     console.log(renderReleaseNotes(notes).trim())
     console.log('')
@@ -190,38 +167,7 @@ export async function releaseController(
     throw new Error('The selected model returned empty release notes.')
   }
 
-  if (exists) {
-    await deleteRelease(cwd, tag, 'inherit')
-  }
-
-  await createRelease(cwd, { tag, target: headSha, notes }, 'inherit')
-}
-
-export function bumpVersionTag(
-  recentTags: string[],
-  bump: 'major' | 'minor' | 'patch'
-) {
-  const versionPattern = /^(v?)(\d+)\.(\d+)\.(\d+)$/
-  const invalidTags = recentTags.filter((tag) => !versionPattern.test(tag))
-  if (invalidTags.length > 0) {
-    throw new Error(
-      `Recent release tags must be MAJOR.MINOR.PATCH versions to use --${bump}: ${invalidTags.join(', ')}`
-    )
-  }
-
-  const match = versionPattern.exec(recentTags[0] ?? '')
-  if (!match) {
-    throw new Error(`No previous release found to apply --${bump} to.`)
-  }
-
-  const prefix = match[1]
-  const major = Number(match[2])
-  const minor = Number(match[3])
-  const patch = Number(match[4])
-  if (bump === 'major') return `${prefix}${major + 1}.0.0`
-  if (bump === 'minor') return `${prefix}${major}.${minor + 1}.0`
-  if (bump === 'patch') return `${prefix}${major}.${minor}.${patch + 1}`
-  throw new Error(`Unknown version bump '${bump}'.`)
+  await publishRelease(cwd, { tag, target: headSha, notes }, exists, 'inherit')
 }
 
 function printRecentReleases(
