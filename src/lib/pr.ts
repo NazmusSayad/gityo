@@ -208,7 +208,7 @@ export function formatCompareSummary(compare: CompareResult) {
 
   return [
     chalk.dim(
-      `${compare.commits.length} ${compare.commits.length === 1 ? 'commit' : 'commits'} · ${files.length} ${files.length === 1 ? 'file' : 'files'}`
+      `${compare.commits.length} ${compare.commits.length === 1 ? 'commit' : 'commits'}, ${files.length} ${files.length === 1 ? 'file' : 'files'},`
     ),
     chalk.green.dim(`+${additions}`),
     chalk.red.dim(`-${deletions}`),
