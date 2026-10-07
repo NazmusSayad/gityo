@@ -1,4 +1,4 @@
-import { exec, execInherit } from './shell.js'
+import { exec, execInherit, execWithOutput } from './shell.js'
 
 export type PullRequest = {
   number: number
@@ -56,28 +56,32 @@ export type CompareResult = {
   files?: CompareFile[]
 }
 
-export async function getDefaultBranch() {
-  const output = await exec('gh', [
-    'repo',
-    'view',
-    '--json',
-    'defaultBranchRef',
-    '--jq',
-    '.defaultBranchRef.name',
-  ])
+export async function getDefaultBranch(cwd: string) {
+  const output = await exec(
+    'gh',
+    [
+      'repo',
+      'view',
+      '--json',
+      'defaultBranchRef',
+      '--jq',
+      '.defaultBranchRef.name',
+    ],
+    cwd
+  )
 
   return output.trim()
 }
 
-export async function fetchCompare(base: string, head: string) {
-  return ghJson<CompareResult>([
+export async function fetchCompare(cwd: string, base: string, head: string) {
+  return ghJson<CompareResult>(cwd, [
     'api',
     `repos/{owner}/{repo}/compare/${base}...${head}`,
   ])
 }
 
-export async function findPullRequest(base: string, head: string) {
-  const result = await ghJson<PullRequestQueryResult>([
+export async function findPullRequest(cwd: string, base: string, head: string) {
+  const result = await ghJson<PullRequestQueryResult>(cwd, [
     'api',
     'graphql',
     '-f',
@@ -115,38 +119,55 @@ export async function findPullRequest(base: string, head: string) {
   }
 }
 
-export async function createPullRequest(input: {
-  title: string
-  body: string
-  base: string
-  head: string
-}) {
-  return exec('gh', [
-    'pr',
-    'create',
-    '--title',
-    input.title,
-    '--body',
-    input.body,
-    '--assignee',
-    '@me',
-    '--base',
-    input.base,
-    '--head',
-    input.head,
-  ])
+export async function createPullRequest(
+  cwd: string,
+  input: {
+    title: string
+    body: string
+    base: string
+    head: string
+  }
+) {
+  return exec(
+    'gh',
+    [
+      'pr',
+      'create',
+      '--title',
+      input.title,
+      '--body',
+      input.body,
+      '--assignee',
+      '@me',
+      '--base',
+      input.base,
+      '--head',
+      input.head,
+    ],
+    cwd
+  )
 }
 
 export type MergeMethod = 'merge' | 'rebase' | 'squash'
 
-export async function mergePullRequest(number: number, method: MergeMethod) {
-  await execInherit('gh', ['pr', 'merge', String(number), `--${method}`])
+export async function mergePullRequest(
+  cwd: string,
+  number: number,
+  method: MergeMethod,
+  output: 'inherit' | 'capture'
+) {
+  await execWithOutput(
+    'gh',
+    ['pr', 'merge', String(number), `--${method}`],
+    cwd,
+    output
+  )
 }
 
-export async function openPullRequest(number: number) {
-  await execInherit('gh', ['pr', 'view', String(number), '--web'])
+export async function openPullRequest(cwd: string, number: number) {
+  await execInherit('gh', ['pr', 'view', String(number), '--web'], cwd)
 }
 
-async function ghJson<T>(args: string[]): Promise<T> {
-  return JSON.parse(await exec('gh', args)) as T
+async function ghJson<T>(cwd: string, args: string[]): Promise<T> {
+  return JSON.parse(await exec('gh', args, cwd)) as T
 }

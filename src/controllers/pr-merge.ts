@@ -30,21 +30,22 @@ export async function mergePullRequestController(
   headArg: string | undefined,
   options: PrMergeControllerOptions = {}
 ) {
-  const context = await loadPullRequestContext({
+  const cwd = process.cwd()
+  const context = await loadPullRequestContext(cwd, {
     modelKey: options.model,
     titleStyle: options.titleStyle,
     bodyStyle: options.bodyStyle,
   })
 
   const systemPrompt = buildPullRequestSystemPrompt(context)
-  const branches = await resolvePrBranches(baseArg, headArg)
+  const branches = await resolvePrBranches(cwd, baseArg, headArg)
 
   await handleUncommittedChanges(branches.head, {
     yolo: options.yolo ?? false,
     scope: options.all ? 'everything' : 'staged-or-changes',
   })
 
-  let pullRequest = await findPullRequest(branches.base, branches.head)
+  let pullRequest = await findPullRequest(cwd, branches.base, branches.head)
 
   if (pullRequest) {
     console.log(
@@ -55,6 +56,7 @@ export async function mergePullRequestController(
     console.log(pullRequest.url)
   } else {
     pullRequest = await createPullRequest({
+      cwd,
       base: branches.base,
       head: branches.head,
       systemPrompt,
@@ -82,11 +84,13 @@ export async function mergePullRequestController(
   }
 
   await mergePullRequest(
+    cwd,
     pullRequest.number,
-    options.mergeMethod ?? context.config.prMergeMethod
+    options.mergeMethod ?? context.config.prMergeMethod,
+    'inherit'
   )
 
   if (options.web) {
-    await openPullRequest(pullRequest.number)
+    await openPullRequest(cwd, pullRequest.number)
   }
 }

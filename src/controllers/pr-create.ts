@@ -21,14 +21,15 @@ export async function createPullRequestController(
   headArg: string | undefined,
   options: PrCreateControllerOptions = {}
 ) {
-  const context = await loadPullRequestContext({
+  const cwd = process.cwd()
+  const context = await loadPullRequestContext(cwd, {
     modelKey: options.model,
     titleStyle: options.titleStyle,
     bodyStyle: options.bodyStyle,
   })
   const systemPrompt = buildPullRequestSystemPrompt(context)
 
-  const branches = await resolvePrBranches(baseArg, headArg)
+  const branches = await resolvePrBranches(cwd, baseArg, headArg)
 
   await handleUncommittedChanges(branches.head, {
     yolo: options.yolo ?? false,
@@ -36,6 +37,7 @@ export async function createPullRequestController(
   })
 
   const pullRequest = await createPullRequest({
+    cwd,
     base: branches.base,
     head: branches.head,
     systemPrompt,
@@ -47,7 +49,7 @@ export async function createPullRequestController(
       throw error
     }
 
-    const existing = await findPullRequest(branches.base, branches.head)
+    const existing = await findPullRequest(cwd, branches.base, branches.head)
 
     if (!existing) {
       throw error
@@ -57,6 +59,6 @@ export async function createPullRequestController(
   })
 
   if (options.web) {
-    await openPullRequest(pullRequest.number)
+    await openPullRequest(cwd, pullRequest.number)
   }
 }

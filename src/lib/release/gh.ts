@@ -1,20 +1,27 @@
-import { exec, execInherit } from '../shell.js'
+import { exec, execWithOutput } from '../shell.js'
 
 export type Release = {
   tagName: string
   publishedAt: string
 }
 
-export async function listReleases(limit: number): Promise<Release[]> {
-  const output = await exec('gh', [
-    'release',
-    'list',
-    '--exclude-drafts',
-    '--limit',
-    String(limit),
-    '--json',
-    'tagName,publishedAt',
-  ])
+export async function listReleases(
+  cwd: string,
+  limit: number
+): Promise<Release[]> {
+  const output = await exec(
+    'gh',
+    [
+      'release',
+      'list',
+      '--exclude-drafts',
+      '--limit',
+      String(limit),
+      '--json',
+      'tagName,publishedAt',
+    ],
+    cwd
+  )
 
   const releases = JSON.parse(output) as Release[]
 
@@ -34,18 +41,23 @@ export type ReleaseCommit = {
 const COMMIT_JQ =
   '{hash: .sha, date: .commit.author.date, authorName: .commit.author.name, authorEmail: .commit.author.email, message: .commit.message}'
 
-export async function getBranchHeadSha(branch: string) {
-  const output = await exec('gh', [
-    'api',
-    `repos/{owner}/{repo}/commits/${encodeURIComponent(branch)}`,
-    '--jq',
-    '.sha',
-  ])
+export async function getBranchHeadSha(cwd: string, branch: string) {
+  const output = await exec(
+    'gh',
+    [
+      'api',
+      `repos/{owner}/{repo}/commits/${encodeURIComponent(branch)}`,
+      '--jq',
+      '.sha',
+    ],
+    cwd
+  )
 
   return output.trim()
 }
 
 export async function listReleaseCommits(
+  cwd: string,
   fromTag: string | null,
   toSha: string
 ): Promise<ReleaseCommit[]> {
@@ -62,7 +74,7 @@ export async function listReleaseCommits(
           `.commits[] | ${COMMIT_JQ}`,
         ]
 
-  const output = await exec('gh', ['api', '--paginate', ...args])
+  const output = await exec('gh', ['api', '--paginate', ...args], cwd)
   const commits = output
     .split('\n')
     .filter((line) => line.length > 0)
@@ -71,37 +83,55 @@ export async function listReleaseCommits(
   return fromTag === null ? commits : commits.reverse()
 }
 
-export async function releaseExists(tag: string) {
+export async function releaseExists(cwd: string, tag: string) {
   try {
-    await exec('gh', ['release', 'view', tag, '--json', 'tagName'])
+    await exec('gh', ['release', 'view', tag, '--json', 'tagName'], cwd)
     return true
   } catch {
     return false
   }
 }
 
-export async function deleteRelease(tag: string) {
-  await execInherit('gh', ['release', 'delete', tag, '--yes'])
-  await execInherit('gh', [
-    'api',
-    '--method',
-    'DELETE',
-    `repos/{owner}/{repo}/git/refs/tags/${encodeURIComponent(tag)}`,
-  ])
+export async function deleteRelease(
+  cwd: string,
+  tag: string,
+  output: 'inherit' | 'capture'
+) {
+  await execWithOutput('gh', ['release', 'delete', tag, '--yes'], cwd, output)
+  await execWithOutput(
+    'gh',
+    [
+      'api',
+      '--method',
+      'DELETE',
+      `repos/{owner}/{repo}/git/refs/tags/${encodeURIComponent(tag)}`,
+    ],
+    cwd,
+    output
+  )
 }
 
-export async function createRelease(input: {
-  tag: string
-  target: string
-  notes: string
-}) {
-  await execInherit('gh', [
-    'release',
-    'create',
-    input.tag,
-    '--target',
-    input.target,
-    '--notes',
-    input.notes,
-  ])
+export async function createRelease(
+  cwd: string,
+  input: {
+    tag: string
+    target: string
+    notes: string
+  },
+  output: 'inherit' | 'capture'
+) {
+  await execWithOutput(
+    'gh',
+    [
+      'release',
+      'create',
+      input.tag,
+      '--target',
+      input.target,
+      '--notes',
+      input.notes,
+    ],
+    cwd,
+    output
+  )
 }

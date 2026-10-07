@@ -20,6 +20,7 @@ export type ReleaseLimits = {
 }
 
 export async function generateReleaseNotes(
+  cwd: string,
   languageModel: LanguageModel,
   commits: ReleaseCommit[],
   limits: ReleaseLimits
@@ -33,7 +34,7 @@ export async function generateReleaseNotes(
   const result = await generateText({
     model: languageModel,
     instructions: releasePrompt,
-    tools: createReleaseTools(languageModel, limits),
+    tools: createReleaseTools(cwd, languageModel, limits),
     stopWhen: isStepCount(1000),
     messages: [
       {

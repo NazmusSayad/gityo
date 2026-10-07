@@ -14,7 +14,7 @@ export async function handleUncommittedChanges(
   headBranch: string,
   options: LocalChangesOptions = {}
 ) {
-  const currentBranch = await getCurrentBranch()
+  const currentBranch = await getCurrentBranch(process.cwd())
 
   if (currentBranch !== headBranch) {
     return

@@ -38,6 +38,7 @@ function parseLsTree(output: string): string[] {
 }
 
 export function createReleaseTools(
+  cwd: string,
   languageModel: LanguageModel,
   limits: ReleaseLimits
 ): ToolSet {
@@ -55,24 +56,21 @@ export function createReleaseTools(
   }
 
   async function readCommitDiff(ref: string) {
-    const fullDiff = await exec('git', [
-      'show',
-      '--no-color',
-      '--pretty=format:',
-      ref,
-    ])
+    const fullDiff = await exec(
+      'git',
+      ['show', '--no-color', '--pretty=format:', ref],
+      cwd
+    )
 
     if (estimateTokens(fullDiff) <= remainingTokens) {
       return fullDiff
     }
 
-    const numstat = await exec('git', [
-      'show',
-      '--no-color',
-      '--pretty=format:',
-      '--numstat',
-      ref,
-    ])
+    const numstat = await exec(
+      'git',
+      ['show', '--no-color', '--pretty=format:', '--numstat', ref],
+      cwd
+    )
     const tocLines = numstat.trim().split('\n')
     const toc =
       tocLines.length <= MAX_TOC_LINES
@@ -84,16 +82,20 @@ export function createReleaseTools(
     const header = `This diff is too large to show in full.\n\nChanged files (additions, deletions, path):\n${toc}`
 
     const minimizedDiff = capFileSections(
-      await exec('git', [
-        'show',
-        '--no-color',
-        '--pretty=format:',
-        '--unified=1',
-        ref,
-        '--',
-        ':/',
-        ...NOISE_FILE_EXCLUDES,
-      ]),
+      await exec(
+        'git',
+        [
+          'show',
+          '--no-color',
+          '--pretty=format:',
+          '--unified=1',
+          ref,
+          '--',
+          ':/',
+          ...NOISE_FILE_EXCLUDES,
+        ],
+        cwd
+      ),
       limits.perFileCap
     )
     const minimized = `${header}\n\nDiff with less context, generated files excluded, and long files truncated:\n${minimizedDiff}`
@@ -161,7 +163,7 @@ export function createReleaseTools(
         const normalized = path.replace(/^\/+|\/+$/g, '')
 
         if (normalized === '') {
-          const output = await exec('git', ['ls-tree', commithash])
+          const output = await exec('git', ['ls-tree', commithash], cwd)
           return {
             type: 'folder',
             items: parseLsTree(spend(output)),
@@ -171,18 +173,18 @@ export function createReleaseTools(
         const ref = `${commithash}:${normalized}`
         let objectType: string
         try {
-          objectType = (await exec('git', ['cat-file', '-t', ref])).trim()
+          objectType = (await exec('git', ['cat-file', '-t', ref], cwd)).trim()
         } catch {
           return { error: "doesn't exists" }
         }
 
         if (objectType === 'tree') {
-          const output = await exec('git', ['ls-tree', ref])
+          const output = await exec('git', ['ls-tree', ref], cwd)
           return { type: 'folder', items: parseLsTree(spend(output)) }
         }
 
         if (objectType === 'blob') {
-          const content = await exec('git', ['show', ref])
+          const content = await exec('git', ['show', ref], cwd)
           return { type: 'file', content: spend(content) }
         }
 

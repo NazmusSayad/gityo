@@ -5,12 +5,14 @@ import packageJSON from './package.json' with { type: 'json' }
 export default defineConfig({
   entry: {
     index: './src/index.ts',
+    lib: './src/lib.ts',
   },
 
   format: 'es',
   outDir: './dist',
   tsconfig: './tsconfig.json',
 
+  dts: { entry: './src/lib.ts' },
   target: 'ES2020',
   minify: 'dce-only',
 

@@ -19,6 +19,13 @@
   "bin": {
     "gityo": "dist/index.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js"
+    },
+    "./package.json": "./package.json"
+  },
   "devDependencies": {
     "@ai-sdk/amazon-bedrock": "^5.0.87",
     "@ai-sdk/anthropic": "^4.0.57",

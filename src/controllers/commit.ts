@@ -50,41 +50,22 @@ const MIN_CHUNK_BUDGET_TOKENS = 1000
 const MAX_TOC_LINES = 500
 
 export async function mainController(options: MainControllerOptions = {}) {
-  const { git, liveGit } = await getGit()
-  const config = await loadConfig(
-    (await git.revparse(['--show-toplevel'])).trim()
-  )
-
-  const modelKey = options.model ?? config.commitModel ?? config.model
-  const modelConfig = resolveModelConfig(config.models, modelKey)
-
-  const languageModel = resolveLanguageModel(modelConfig)
-
-  const styleKey = options.style ?? config.commitStyle ?? 'default'
-  const style = await resolveStyle(styleKey, config.commitStyles)
-  if (!style) {
-    const availableStyles = getStyleKeys(config.commitStyles).join(', ')
-    throw new Error(
-      `Style '${styleKey}' is not configured. Available styles: ${availableStyles}.`
-    )
-  }
-
-  const instructions = config.commitInstructions
-    ? await resolveInstructionContent(config.commitInstructions)
-    : null
-
-  const forceLLMGenerate = options.generate || options.yolo
-  const forceExecPostCommand = options.post || options.yolo
-
   let finalCommitMessage = options.input?.trim() ?? ''
   if (typeof options.input === 'string' && finalCommitMessage.length === 0) {
     throw new Error('Provided commit message input cannot be empty.')
   }
 
-  const { diffScope, files } = await getCommitFiles(
-    git,
-    options.scope ?? 'staged-or-changes'
-  )
+  const prepared = await prepareCommit({
+    cwd: process.cwd(),
+    scope: options.scope ?? 'staged-or-changes',
+    model: options.model,
+    style: options.style,
+  })
+  const { git, liveGit, config, diffScope, files } = prepared
+
+  const forceLLMGenerate = options.generate || options.yolo
+  const forceExecPostCommand = options.post || options.yolo
+
   if (files.length === 0) {
     return console.log('No changed files found.')
   }
@@ -105,26 +86,10 @@ export async function mainController(options: MainControllerOptions = {}) {
 
   if (finalCommitMessage.length === 0) {
     while (true) {
-      const commitMessage = await runWithLoading(
+      finalCommitMessage = await runWithLoading(
         'Generating commit message',
-        () =>
-          generateMessage({
-            git,
-            scope: diffScope,
-            languageModel,
-            style,
-            instructions,
-            diff,
-            files,
-            perFileCap: config.perFileCap ?? DEFAULT_PER_FILE_CAP,
-            maxDiffTokens: config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
-          })
+        () => writeCommitMessage(prepared, diff)
       )
-
-      finalCommitMessage = commitMessage.trim()
-      if (finalCommitMessage.length === 0) {
-        throw new Error('The selected model returned an empty commit message.')
-      }
 
       console.log(chalk.cyan.dim(finalCommitMessage))
       console.log('')
@@ -184,6 +149,72 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (config.postCommand === 'push-and-pull') {
     await liveGit.pull()
   }
+}
+
+export async function prepareCommit(options: {
+  cwd: string
+  scope: CommitScope
+  model?: string
+  style?: string
+}) {
+  const { git, liveGit } = await getGit(options.cwd)
+  const root = (await git.revparse(['--show-toplevel'])).trim()
+  const config = await loadConfig(root)
+
+  const modelKey = options.model ?? config.commitModel ?? config.model
+  const modelConfig = resolveModelConfig(config.models, modelKey)
+
+  const languageModel = resolveLanguageModel(modelConfig)
+
+  const styleKey = options.style ?? config.commitStyle ?? 'default'
+  const style = await resolveStyle(styleKey, config.commitStyles, options.cwd)
+  if (!style) {
+    const availableStyles = getStyleKeys(config.commitStyles).join(', ')
+    throw new Error(
+      `Style '${styleKey}' is not configured. Available styles: ${availableStyles}.`
+    )
+  }
+
+  const instructions = config.commitInstructions
+    ? await resolveInstructionContent(config.commitInstructions, options.cwd)
+    : null
+
+  const { diffScope, files } = await getCommitFiles(git, options.scope)
+
+  return {
+    git,
+    liveGit,
+    root,
+    config,
+    languageModel,
+    style,
+    instructions,
+    diffScope,
+    files,
+  }
+}
+
+export async function writeCommitMessage(
+  prepared: Awaited<ReturnType<typeof prepareCommit>>,
+  diff: string
+) {
+  const message = await generateMessage({
+    git: prepared.git,
+    scope: prepared.diffScope,
+    languageModel: prepared.languageModel,
+    style: prepared.style,
+    instructions: prepared.instructions,
+    diff,
+    files: prepared.files,
+    perFileCap: prepared.config.perFileCap ?? DEFAULT_PER_FILE_CAP,
+    maxDiffTokens: prepared.config.maxDiffTokens ?? DEFAULT_MAX_DIFF_TOKENS,
+  })
+
+  if (message.trim().length === 0) {
+    throw new Error('The selected model returned an empty commit message.')
+  }
+
+  return message.trim()
 }
 
 export async function getCommitFiles(git: SimpleGit, commitScope: CommitScope) {
