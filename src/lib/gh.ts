@@ -148,6 +148,29 @@ export async function createPullRequest(
   )
 }
 
+export async function editPullRequest(
+  cwd: string,
+  number: number,
+  input: {
+    title: string
+    body: string
+  }
+) {
+  await exec(
+    'gh',
+    [
+      'pr',
+      'edit',
+      String(number),
+      '--title',
+      input.title,
+      '--body',
+      input.body,
+    ],
+    cwd
+  )
+}
+
 export type MergeMethod = 'merge' | 'rebase' | 'squash'
 
 export async function mergePullRequest(

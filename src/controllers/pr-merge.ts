@@ -25,6 +25,7 @@ type PrMergeControllerOptions = {
   yolo?: boolean
   all?: boolean
   web?: boolean
+  update?: boolean
 }
 
 export async function mergePullRequestController(
@@ -49,7 +50,7 @@ export async function mergePullRequestController(
 
   let pullRequest = await findPullRequest(cwd, branches.base, branches.head)
 
-  if (pullRequest) {
+  if (pullRequest && !options.update) {
     console.log(
       formatCompareSummary(
         await fetchCompare(cwd, branches.base, branches.head)
@@ -65,6 +66,7 @@ export async function mergePullRequestController(
       languageModel: context.languageModel,
       maxDiffTokens: context.config.maxDiffTokens,
       autoAccept: options.yolo ?? false,
+      existing: pullRequest,
     })
   }
 

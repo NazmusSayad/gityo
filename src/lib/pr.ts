@@ -6,6 +6,7 @@ import path from 'node:path'
 import { DEFAULT_MAX_DIFF_TOKENS, estimateTokens } from './diff.js'
 import {
   createPullRequest as createPullRequestApi,
+  editPullRequest,
   fetchCompare,
   findPullRequest,
   getDefaultBranch,
@@ -75,6 +76,7 @@ type CreatePullRequestOptions = {
   systemPrompt: string
   maxDiffTokens?: number
   autoAccept?: boolean
+  existing?: PullRequest | null
 }
 
 type PullRequestContent = {
@@ -176,7 +178,7 @@ export async function createPullRequest(
     if (
       options.autoAccept ||
       (await acceptGenerated(
-        `Create PR: ${chalk.red.bold(options.base)} ${chalk.reset('←')} ${chalk.yellow.bold(options.head)}`,
+        `${options.existing ? `Update PR #${options.existing.number}` : 'Create PR'}: ${chalk.red.bold(options.base)} ${chalk.reset('←')} ${chalk.yellow.bold(options.head)}`,
         'generate a new pull message'
       ))
     ) {
@@ -185,6 +187,17 @@ export async function createPullRequest(
   }
 
   const content = parsePullRequestContent(draft)
+
+  if (options.existing) {
+    if (options.autoAccept) {
+      console.log(chalk.green('✓ Updating pull request'))
+    }
+
+    await editPullRequest(options.cwd, options.existing.number, content)
+    console.log(options.existing.url)
+
+    return options.existing
+  }
 
   if (options.autoAccept) {
     console.log(chalk.green('✓ Creating pull request'))
