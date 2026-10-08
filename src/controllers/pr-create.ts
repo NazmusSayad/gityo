@@ -47,6 +47,7 @@ export async function createPullRequestController(
     head: branches.head,
     systemPrompt,
     languageModel: context.languageModel,
+    modelKey: context.modelKey,
     maxDiffTokens: context.config.maxDiffTokens,
     autoAccept: options.yolo ?? false,
     existing,

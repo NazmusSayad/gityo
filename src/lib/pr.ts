@@ -73,6 +73,7 @@ type CreatePullRequestOptions = {
   base: string
   head: string
   languageModel: LanguageModel
+  modelKey: string
   systemPrompt: string
   maxDiffTokens?: number
   autoAccept?: boolean
@@ -143,6 +144,7 @@ export async function loadPullRequestContext(
   return {
     config,
     languageModel,
+    modelKey: modelConfig.key,
     titleInstructions,
     bodyInstructions,
   }
@@ -164,12 +166,14 @@ export async function createPullRequest(
   let draft = ''
 
   while (true) {
-    draft = await runWithLoading('Generating pull request title and body', () =>
-      generatePullRequest({
-        languageModel: options.languageModel,
-        systemPrompt: options.systemPrompt,
-        context,
-      })
+    draft = await runWithLoading(
+      `Generating pull request title and body (${options.modelKey})`,
+      () =>
+        generatePullRequest({
+          languageModel: options.languageModel,
+          systemPrompt: options.systemPrompt,
+          context,
+        })
     )
 
     console.log(renderPullRequest(draft).trim())

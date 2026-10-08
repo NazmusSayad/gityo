@@ -3,13 +3,13 @@ import chalk from 'chalk'
 import { createRenderer } from 'markdansi'
 import prettyMs from 'pretty-ms'
 import { getDefaultBranch } from '../lib/gh.js'
+import { resolveLanguageModel, resolveModelConfig } from '../lib/llm/model.js'
 import { loadConfig } from '../lib/load-config.js'
 import { acceptGenerated, selectionTheme } from '../lib/prompts.js'
 import {
   bumpVersionTag,
   getPreviousTag,
   publishRelease,
-  resolveReleaseModel,
   verifyReleaseCommits,
   writeReleaseNotes,
 } from '../lib/release/flow.js'
@@ -125,7 +125,11 @@ export async function releaseController(
     return
   }
 
-  const languageModel = resolveReleaseModel(config, options.model)
+  const modelConfig = resolveModelConfig(
+    config.models,
+    options.model ?? config.releaseModel ?? config.model
+  )
+  const languageModel = resolveLanguageModel(modelConfig)
   const previousTag = getPreviousTag(releases, tag)
 
   const headSha = await getBranchHeadSha(cwd, branch)
@@ -145,8 +149,9 @@ export async function releaseController(
 
   let notes = ''
   while (true) {
-    notes = await runWithLoading('Generating release notes', () =>
-      writeReleaseNotes(cwd, languageModel, config, commits)
+    notes = await runWithLoading(
+      `Generating release notes (${modelConfig.key})`,
+      () => writeReleaseNotes(cwd, languageModel, config, commits)
     )
 
     console.log(renderReleaseNotes(notes).trim())

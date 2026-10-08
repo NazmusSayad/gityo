@@ -15,9 +15,10 @@ export function resolveModelConfig(
     )
   }
 
-  const modelConfig = models[modelKey ?? modelKeys[0]]
+  const key = modelKey ?? modelKeys[0]
+  const modelConfig = models[key]
   if (modelConfig) {
-    return modelConfig
+    return { ...modelConfig, key }
   }
 
   throw new Error(

@@ -64,6 +64,7 @@ export async function mergePullRequestController(
       head: branches.head,
       systemPrompt,
       languageModel: context.languageModel,
+      modelKey: context.modelKey,
       maxDiffTokens: context.config.maxDiffTokens,
       autoAccept: options.yolo ?? false,
       existing: pullRequest,
