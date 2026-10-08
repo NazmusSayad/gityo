@@ -14,6 +14,7 @@ type PrCreateControllerOptions = {
   yolo?: boolean
   all?: boolean
   web?: boolean
+  update?: boolean
 }
 
 export async function createPullRequestController(
@@ -36,14 +37,20 @@ export async function createPullRequestController(
     scope: options.all ? 'everything' : 'staged-or-changes',
   })
 
+  const existing = options.update
+    ? await findPullRequest(cwd, branches.base, branches.head)
+    : null
+
   const pullRequest = await createPullRequest({
     cwd,
     base: branches.base,
     head: branches.head,
     systemPrompt,
     languageModel: context.languageModel,
+    modelKey: context.modelKey,
     maxDiffTokens: context.config.maxDiffTokens,
     autoAccept: options.yolo ?? false,
+    existing,
   }).catch(async (error: unknown) => {
     if (!options.web) {
       throw error

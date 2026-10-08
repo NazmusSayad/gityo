@@ -93,7 +93,7 @@ export async function mainController(options: MainControllerOptions = {}) {
   if (finalCommitMessage.length === 0) {
     while (true) {
       finalCommitMessage = await runWithLoading(
-        'Generating commit message',
+        `Generating commit message (${prepared.modelConfig.key})`,
         () => writeCommitMessage(prepared, diff)
       )
 
@@ -192,6 +192,7 @@ export async function prepareCommit(options: {
     liveGit,
     root,
     config,
+    modelConfig,
     languageModel,
     style,
     instructions,
