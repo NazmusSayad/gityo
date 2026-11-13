@@ -18,6 +18,7 @@ import {
   listReleaseCommits,
   listReleases,
   releaseExists,
+  type ReleaseStage,
 } from '../lib/release/gh.js'
 import { getRepoRoot } from '../lib/release/git.js'
 import { runWithLoading } from '../lib/run-with-loading.js'
@@ -34,6 +35,7 @@ type ReleaseControllerOptions = {
   force?: boolean
   empty?: boolean
   bump?: 'major' | 'minor' | 'patch'
+  stage?: ReleaseStage
 }
 
 export async function releaseController(
@@ -54,6 +56,13 @@ export async function releaseController(
   const repoRoot = await getRepoRoot(cwd)
   const config = await loadConfig(repoRoot)
   const releases = await listReleases(cwd, 100)
+  const stage = options.stage ?? config.releaseStage
+  const releaseLabel =
+    stage === 'draft'
+      ? 'draft release'
+      : stage === 'pre'
+        ? 'prerelease'
+        : 'release'
 
   let tag = tagArg?.trim() ?? ''
   if (options.bump) {
@@ -107,7 +116,7 @@ export async function releaseController(
     if (
       !options.yolo &&
       !(await confirm({
-        message: `Create release ${chalk.yellow.bold(tag)} on ${chalk.yellow.bold(branch)} without notes?`,
+        message: `Create ${releaseLabel} ${chalk.yellow.bold(tag)} on ${chalk.yellow.bold(branch)} without notes?`,
         default: true,
         theme: selectionTheme,
       }))
@@ -118,7 +127,7 @@ export async function releaseController(
 
     await publishRelease(
       cwd,
-      { tag, target: headSha, notes: '' },
+      { tag, target: headSha, notes: '', stage },
       exists,
       'inherit'
     )
@@ -160,7 +169,7 @@ export async function releaseController(
     if (
       options.yolo ||
       (await acceptGenerated(
-        `Create release ${chalk.yellow.bold(tag)} on ${chalk.yellow.bold(branch)}`,
+        `Create ${releaseLabel} ${chalk.yellow.bold(tag)} on ${chalk.yellow.bold(branch)}`,
         'generate new release notes'
       ))
     ) {
@@ -172,7 +181,12 @@ export async function releaseController(
     throw new Error('The selected model returned empty release notes.')
   }
 
-  await publishRelease(cwd, { tag, target: headSha, notes }, exists, 'inherit')
+  await publishRelease(
+    cwd,
+    { tag, target: headSha, notes, stage },
+    exists,
+    'inherit'
+  )
 }
 
 function printRecentReleases(

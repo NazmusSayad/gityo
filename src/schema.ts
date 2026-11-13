@@ -29,6 +29,7 @@ export const configSchema = z
     prModel: z.string().min(1),
     commitModel: z.string().min(1),
     releaseModel: z.string().min(1),
+    releaseStage: z.enum(['draft', 'pre']),
 
     commitInstructions: instructionSchema,
     commitStyle: z.string().min(1),
@@ -58,6 +59,7 @@ export function resolveConfig(input: unknown) {
     prModel: parsed.prModel,
     commitModel: parsed.commitModel,
     releaseModel: parsed.releaseModel,
+    releaseStage: parsed.releaseStage,
 
     commitStyle: parsed.commitStyle,
     commitStyles: parsed.commitStyles,

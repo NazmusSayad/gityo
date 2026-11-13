@@ -30,6 +30,8 @@ export async function listReleases(
   )
 }
 
+export type ReleaseStage = 'draft' | 'pre'
+
 export type ReleaseCommit = {
   hash: string
   date: string
@@ -117,6 +119,7 @@ export async function createRelease(
     tag: string
     target: string
     notes: string
+    stage?: ReleaseStage
   },
   output: 'inherit' | 'capture'
 ) {
@@ -130,6 +133,11 @@ export async function createRelease(
       input.target,
       '--notes',
       input.notes,
+      ...(input.stage === 'draft'
+        ? ['--draft']
+        : input.stage === 'pre'
+          ? ['--prerelease']
+          : []),
     ],
     cwd,
     output

@@ -34,6 +34,7 @@ import {
   listReleases,
   releaseExists,
   type ReleaseCommit,
+  type ReleaseStage,
 } from './lib/release/gh.js'
 import { getRepoRoot } from './lib/release/git.js'
 
@@ -232,6 +233,7 @@ export type ReleaseSession = {
 export async function createReleaseSession(options: {
   cwd: string
   model?: string
+  stage?: ReleaseStage
 }): Promise<ReleaseSession> {
   const config = await loadConfig(await getRepoRoot(options.cwd))
   const releases = await listReleases(options.cwd, 100)
@@ -312,7 +314,12 @@ export async function createReleaseSession(options: {
 
           await publishRelease(
             options.cwd,
-            { tag, target: headSha, notes },
+            {
+              tag,
+              target: headSha,
+              notes,
+              stage: options.stage ?? config.releaseStage,
+            },
             exists,
             'capture'
           )

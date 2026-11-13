@@ -241,6 +241,10 @@ app
     'Recreate the release without asking if it already exists.'
   )
   .option('-e, --empty', 'Create the release without any release notes.')
+  .option(
+    '-s, --stage <stage>',
+    'Release stage: "draft" (-sd) or "pre" (-sp) for a prerelease.'
+  )
   .option('--major', 'Bump the major version of the latest release.')
   .option('--minor', 'Bump the minor version of the latest release.')
   .option('--patch', 'Bump the patch version of the latest release.')
@@ -251,9 +255,22 @@ app
       process.exit(1)
     }
 
+    let stage: 'draft' | 'pre' | undefined
+    if (options.stage === 'draft' || options.stage === 'd') {
+      stage = 'draft'
+    } else if (options.stage === 'pre' || options.stage === 'p') {
+      stage = 'pre'
+    } else if (options.stage !== undefined) {
+      console.error(
+        `Unknown release stage '${options.stage}'. Use "draft" (-sd) or "pre" (-sp).`
+      )
+      process.exit(1)
+    }
+
     handleError(() =>
       releaseController(tag, {
         ...options,
+        stage,
         bump: options.major
           ? 'major'
           : options.minor

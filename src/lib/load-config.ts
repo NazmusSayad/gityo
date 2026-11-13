@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { configSchema, resolveConfig } from '../schema.js'
+import { exec } from './shell.js'
 
 export const PROJECT_CONFIG_FILE_NAME = '.gityo.json'
 export const GLOBAL_CONFIG_FILE_PATH = path.join(
@@ -39,7 +40,33 @@ export async function loadConfig(cwd = process.cwd()) {
 }
 
 async function readProjectConfig(cwd = process.cwd()) {
-  return readConfigFile(path.join(cwd, PROJECT_CONFIG_FILE_NAME))
+  const config = await readConfigFile(path.join(cwd, PROJECT_CONFIG_FILE_NAME))
+  if (config) {
+    return config
+  }
+
+  const mainWorktreeRoot = await getMainWorktreeRoot(cwd)
+  if (mainWorktreeRoot === null) {
+    return undefined
+  }
+
+  return readConfigFile(path.join(mainWorktreeRoot, PROJECT_CONFIG_FILE_NAME))
+}
+
+async function getMainWorktreeRoot(cwd: string) {
+  let commonDir: string
+
+  try {
+    commonDir = await exec(
+      'git',
+      ['rev-parse', '--path-format=absolute', '--git-common-dir'],
+      cwd
+    )
+  } catch {
+    return null
+  }
+
+  return path.dirname(commonDir.trim())
 }
 
 async function readGlobalConfig() {

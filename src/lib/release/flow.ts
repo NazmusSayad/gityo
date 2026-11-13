@@ -2,7 +2,12 @@ import type { LanguageModel } from 'ai'
 import { DEFAULT_MAX_DIFF_TOKENS, DEFAULT_PER_FILE_CAP } from '../diff.js'
 import { resolveLanguageModel, resolveModelConfig } from '../llm/model.js'
 import type { loadConfig } from '../load-config.js'
-import { createRelease, deleteRelease, type ReleaseCommit } from './gh.js'
+import {
+  createRelease,
+  deleteRelease,
+  type ReleaseCommit,
+  type ReleaseStage,
+} from './gh.js'
 import { assertLocalCommitsMatch, fetchBranchAndTags } from './git.js'
 import { EMPTY_RELEASE_NOTES, generateReleaseNotes } from './notes.js'
 
@@ -86,7 +91,7 @@ export async function writeReleaseNotes(
 
 export async function publishRelease(
   cwd: string,
-  input: { tag: string; target: string; notes: string },
+  input: { tag: string; target: string; notes: string; stage?: ReleaseStage },
   replace: boolean,
   output: 'inherit' | 'capture'
 ) {
